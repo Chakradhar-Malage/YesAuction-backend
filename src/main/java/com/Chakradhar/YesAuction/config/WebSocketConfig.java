@@ -16,7 +16,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Later: switch to Redis for scalability
         // config.enableStompBrokerRelay("/topic").setRelayHost("localhost").setRelayPort(61613);
         
-        config.setApplicationDestinationPrefixes("/app");  // client sends to /app/...
+        config.setApplicationDestinationPrefixes("/app");  // client sends to /app
+        config.enableStompBrokerRelay("/topic", "/queue")
+        .setRelayHost("localhost")
+        .setRelayPort(61613);
         config.setUserDestinationPrefix("/user");  // for private messages if needed
     }
 
