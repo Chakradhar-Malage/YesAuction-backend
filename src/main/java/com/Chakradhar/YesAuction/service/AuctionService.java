@@ -1,6 +1,7 @@
 package com.Chakradhar.YesAuction.service;
 
 import com.Chakradhar.YesAuction.config.RabbitMQConfig;
+import com.Chakradhar.YesAuction.dto.AuctionResponse;
 import com.Chakradhar.YesAuction.dto.AuctionUpdateDto;
 import com.Chakradhar.YesAuction.dto.BidMessageDto;
 import com.Chakradhar.YesAuction.dto.BidUpdateDto;
@@ -10,6 +11,9 @@ import com.Chakradhar.YesAuction.entity.*;
 import com.Chakradhar.YesAuction.repository.AuctionRepository;
 import com.Chakradhar.YesAuction.repository.BidRepository;
 import com.Chakradhar.YesAuction.repository.ItemRepository;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -63,14 +67,51 @@ public class AuctionService {
 
         return auctionRepository.save(auction);
     }
-
+    
+    @Cacheable(value = "activeAuctions")
     public List<Auction> getActiveAuctions() {
         return auctionRepository.findByStatus(AuctionStatus.ACTIVE);
     }
 
+    @Cacheable(value = "auctions", key = "#id")
     public Auction getAuctionById(Long id) {
         return auctionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Auction not found"));
+    }
+    
+    private AuctionResponse mapToDto(Auction auction) {
+
+        AuctionResponse dto = new AuctionResponse();
+
+        dto.setId(auction.getId());
+        dto.setTitle(auction.getItem().getTitle());
+        dto.setDescription(auction.getItem().getDescription());
+        dto.setImageUrl(auction.getItem().getImageUrl());
+        dto.setCurrentPrice(auction.getCurrentPrice());
+        dto.setEndTime(auction.getEndTime());
+        dto.setStatus(auction.getStatus());
+
+        if (auction.getSeller() != null) {
+            dto.setSellerUsername(
+                auction.getSeller().getUsername()
+            );
+        }
+
+        return dto;
+    }
+    
+    public List<AuctionResponse> getActiveAuctionsDto() {
+
+        return auctionRepository.findByStatus(AuctionStatus.ACTIVE)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+    
+    // Clear cache when auction changes (new bid, status update, etc.)
+    @CacheEvict(value = "auctions", key = "#auction.id")
+    public void updateAuction(Auction auction) {
+        auctionRepository.save(auction);
     }
 
     @Transactional
@@ -85,6 +126,8 @@ public class AuctionService {
             auctionRepository.save(auction);
             throw new RuntimeException("Auction has ended");
         }
+        
+        updateAuction(auction);
 
         BigDecimal minBid = auction.getCurrentPrice().add(BigDecimal.valueOf(1));  // simple increment rule
         if (request.getAmount().compareTo(minBid) < 0) {

@@ -20,30 +20,39 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            JwtAuthenticationFilter jwtAuthenticationFilter
-    ) throws Exception {
+	@Bean
+	public SecurityFilterChain securityFilterChain(
+	        HttpSecurity http,
+	        JwtAuthenticationFilter jwtAuthenticationFilter
+	) throws Exception {
 
-        http
-            .cors(cors -> {}) //enabled cors
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //allow preflight
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/ws/**").permitAll() //allow websocket
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .addFilterBefore(jwtAuthenticationFilter,
-                    UsernamePasswordAuthenticationFilter.class);
+	    http
+	        .cors(cors -> {})
+	        .csrf(csrf -> csrf.disable())
 
-        return http.build();
-    }
+	        .sessionManagement(session ->
+	            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
+	        .authorizeHttpRequests(auth -> auth
+
+	            // Public
+	            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+	            .requestMatchers("/api/auth/**", "/error").permitAll()
+	            .requestMatchers("/ws/**").permitAll()
+
+	            // Protected
+	            .requestMatchers("/api/auctions/**").hasRole("USER")
+
+	            // Everything else
+	            .anyRequest().authenticated()
+	        )
+
+	        .addFilterBefore(jwtAuthenticationFilter,
+	                UsernamePasswordAuthenticationFilter.class);
+
+	    return http.build();
+	}
+	
     //CORS CONFIGURATION
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

@@ -30,7 +30,7 @@ public class Auction {
 
     @Column(nullable = false)
     private BigDecimal startingPrice;
-
+    
     private BigDecimal currentPrice;  // starts as startingPrice
 
     @Column(nullable = false)
@@ -50,4 +50,5 @@ public class Auction {
         bid.setAuction(this);
         this.currentPrice = bid.getAmount();
     }
+    
 }

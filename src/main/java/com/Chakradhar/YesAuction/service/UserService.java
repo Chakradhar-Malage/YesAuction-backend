@@ -3,6 +3,9 @@ package com.Chakradhar.YesAuction.service;
 import com.Chakradhar.YesAuction.dto.RegisterRequest;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.repository.*;
+
+import java.util.List;
+
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +34,7 @@ public class UserService implements UserDetailsService{
 				.username(request.getUsername())
 				.email(request.getEmail())
 				.password(passwordEncoder.encode(request.getPassword()))
+				.roles(List.of("ROLE_USER"))
 				.build();
 		
 		return userRepository.save(user);
@@ -42,4 +46,10 @@ public class UserService implements UserDetailsService{
 				.or(() -> userRepository.findByEmail(usernameOrEmail))
 				.orElseThrow(() -> new UsernameNotFoundException("User not found "+ usernameOrEmail));
 	}
+	
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found: " + username));
+    }
 }

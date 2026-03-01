@@ -12,21 +12,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");  // simple in-memory for now
-        // Later: switch to Redis for scalability
-        // config.enableStompBrokerRelay("/topic").setRelayHost("localhost").setRelayPort(61613);
-        
-        config.setApplicationDestinationPrefixes("/app");  // client sends to /app
-        config.enableStompBrokerRelay("/topic", "/queue")
-        .setRelayHost("localhost")
-        .setRelayPort(61613);
-        config.setUserDestinationPrefix("/user");  // for private messages if needed
+
+        // ✅ Simple in-memory broker (NO external dependency)
+        config.enableSimpleBroker("/topic", "/queue");
+
+        // Client -> server
+        config.setApplicationDestinationPrefixes("/app");
+
+        // For private messages
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")  // adjust for prod (CORS)
-                .withSockJS();  // fallback for older browsers
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 }
