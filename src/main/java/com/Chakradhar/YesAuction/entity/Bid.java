@@ -35,4 +35,7 @@ public class Bid {
     
     @Column(unique = true)
     private String requestId;
+    
+    @Column(unique = true)
+    private String messageId;
 }

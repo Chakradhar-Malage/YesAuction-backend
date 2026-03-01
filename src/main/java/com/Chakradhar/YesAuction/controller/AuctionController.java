@@ -54,8 +54,12 @@ public class AuctionController {
 
     // GET ONE
     @GetMapping("/{id}")
-    public ResponseEntity<Auction> getAuction(@PathVariable Long id) {
-        return ResponseEntity.ok(auctionService.getAuctionById(id));
+    public ResponseEntity<AuctionResponse> getAuction(@PathVariable Long id) {
+
+        AuctionResponse dto =
+            auctionService.getAuctionByIdDto(id);
+
+        return ResponseEntity.ok(dto);
     }
 
     // BID

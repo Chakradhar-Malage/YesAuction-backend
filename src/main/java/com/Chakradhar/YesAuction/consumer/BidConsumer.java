@@ -82,6 +82,7 @@ public class BidConsumer {
 
             // Create bid
             Bid bid = Bid.builder()
+            		.messageId(message.getMessageId())
                     .auction(auction)
                     .bidder(bidder)
                     .amount(message.getAmount())
@@ -99,7 +100,7 @@ public class BidConsumer {
 
             // Get previous highest bidder
             var previousHighest =
-                    bidRepository.findTopByAuctionIdOrderByAmountDesc(auction.getId());
+            	    bidRepository.findTopByAuctionIdOrderByAmountDesc(auction.getId());
 
             if (previousHighest.isPresent()
                     && previousHighest.get().getId() != bid.getId()) {
@@ -142,8 +143,8 @@ public class BidConsumer {
 
             log.error("Bid processing failed", e);
 
-            // Let Spring/Rabbit retry
-            throw e;
+            // Do NOT requeue on business error
+            // Acknowledge and drop message
         }
     }
 }
