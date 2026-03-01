@@ -10,6 +10,8 @@ import com.Chakradhar.YesAuction.repository.AuctionRepository;
 import com.Chakradhar.YesAuction.repository.BidRepository;
 import com.Chakradhar.YesAuction.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,7 @@ public class BidConsumer {
 
 
     @RabbitListener(queues = RabbitMQConfig.BID_QUEUE)
+    @Transactional
     public void processBid(BidMessageDto message) {
 
         try {

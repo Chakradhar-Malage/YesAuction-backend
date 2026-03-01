@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,16 +32,20 @@ public class User implements UserDetails{
 	@Column(nullable = false)
 	private String password;
 	
-	//temporary solution
 	@ElementCollection(fetch = FetchType.EAGER)
-	private List<String> roles = List.of("ROLES_USER");
+	@CollectionTable(
+	    name = "user_roles",
+	    joinColumns = @JoinColumn(name = "user_id")
+	)
+	@Column(name = "roles")
+	private List<String> roles = new ArrayList<>();
 	
-	@Override 
-	public Collection<? extends GrantedAuthority> getAuthorities(){
-		return roles.stream()
-				.map(role -> (GrantedAuthority)() -> role).toList();
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+	    return roles.stream()
+	            .map(SimpleGrantedAuthority::new)
+	            .toList();
 	}
-	
 	@Override
     public String getPassword() {
         return password;

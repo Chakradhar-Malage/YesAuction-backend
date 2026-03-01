@@ -32,4 +32,7 @@ public class Bid {
 
     @Column(nullable = false)
     private LocalDateTime bidTime = LocalDateTime.now();
+    
+    @Column(unique = true)
+    private String requestId;
 }
