@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -159,7 +160,15 @@ public class AuctionService {
     
     @Transactional
     public void queueBid(Long auctionId, BigDecimal amount, Long bidderId) {
-        BidMessageDto message = new BidMessageDto(auctionId, bidderId, amount);
+        BidMessageDto message = new BidMessageDto(UUID.randomUUID().toString(), auctionId, bidderId, amount);
         rabbitTemplate.convertAndSend(RabbitMQConfig.BID_EXCHANGE, RabbitMQConfig.BID_ROUTING_KEY, message);
+    }
+    
+    public AuctionResponse getAuctionByIdDto(Long id) {
+
+        Auction auction = auctionRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Auction not found"));
+
+        return mapToDto(auction);
     }
 }
