@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: yesauction-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_postgres_password_here
+      POSTGRES_DB: yesauction
+    ports:
+      - "5433:5432"               # map to 5433 to avoid conflict with local postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - yesauction-net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: yesauction-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5673:5672"               # avoid conflict with local rabbitmq
+      - "15673:15672"             # management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - yesauction-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: yesauction-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"               # avoid conflict with local redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - yesauction-net
+
+  backend:
+    build:
+      # context: ./YesAuction-backend/YesAuction-backend/
+      context: ./
+      dockerfile: Dockerfile
+    container_name: yesauction-backend
+    restart: unless-stopped
+    ports:
+      - "8081:8080"               # map to 8081 to avoid conflict with local spring boot
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/yesauction
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Chaku@PostgreSql#321$
+
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      # Redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      # JWT & other app config (use your real values)
+      JWT_SECRET: your-very-long-random-secret-key-please-change-this
+      JWT_EXPIRATION: 86400000
+
+      # Spring profiles (optional)
+      SPRING_PROFILES_ACTIVE: docker
+
+      # Actuator (optional but useful)
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - yesauction-net
+
+networks:
+  yesauction-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
