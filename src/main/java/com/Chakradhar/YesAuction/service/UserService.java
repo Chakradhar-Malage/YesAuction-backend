@@ -2,7 +2,7 @@ package com.Chakradhar.YesAuction.service;
 
 import com.Chakradhar.YesAuction.dto.RegisterRequest;
 import com.Chakradhar.YesAuction.entity.User;
-import com.Chakradhar.YesAuction.repository.*;
+import com.Chakradhar.YesAuction.repository.UserRepository;
 
 import java.util.List;
 
