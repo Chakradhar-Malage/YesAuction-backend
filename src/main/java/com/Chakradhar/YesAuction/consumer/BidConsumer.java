@@ -2,6 +2,7 @@ package com.Chakradhar.YesAuction.consumer;
 
 import com.Chakradhar.YesAuction.config.RabbitMQConfig;
 import com.Chakradhar.YesAuction.dto.BidMessageDto;
+import com.Chakradhar.YesAuction.dto.BidUpdateDto;
 import com.Chakradhar.YesAuction.dto.OutbidNotificationDto;
 import com.Chakradhar.YesAuction.entity.AuctionStatus;
 import com.Chakradhar.YesAuction.entity.Bid;
@@ -96,7 +97,15 @@ public class BidConsumer {
             auctionRepository.save(auction);
 
             log.info("Bid saved: {}", bid.getId());
-
+            
+            // Push to WebSocket (frontend live update)
+            messagingTemplate.convertAndSend(
+                    "/topic/auction/" + auction.getId(),
+                    new BidUpdateDto(
+                        bid.getAmount(),              // latest bid amount
+                        bidder.getUsername(),        // bidder username
+                        bid.getBidTime()             // timestamp               		
+            ));
 
             // Get previous highest bidder
             var previousHighest =
@@ -130,12 +139,6 @@ public class BidConsumer {
                     log.info("Outbid notification sent to {}",
                             previousBidder.getUsername());
 
-
-                    // Push to WebSocket (frontend live update)
-                    messagingTemplate.convertAndSend(
-                            "/topic/auction/" + auction.getId(),
-                            notification
-                    );
                 }
             }
 

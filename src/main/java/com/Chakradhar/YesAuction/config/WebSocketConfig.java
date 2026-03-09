@@ -13,7 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
 
-        // ✅ Simple in-memory broker (NO external dependency)
+        // Simple in-memory broker (NO external dependency)
         config.enableSimpleBroker("/topic", "/queue");
 
         // Client -> server
