@@ -9,6 +9,7 @@ import com.Chakradhar.YesAuction.service.UserService;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auctions")
@@ -76,6 +78,21 @@ public class AuctionController {
         auctionService.queueBid(id, request.getAmount(), bidder.getId());
 
         return ResponseEntity.ok("Bid received and being processed...");
+    }
+    
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{id}/bids")
+    public ResponseEntity<List<BidResponse>> getBidHistory(@PathVariable Long id){
+    	List<Bid> bids = auctionService.getBidHistory(id);
+    	List<BidResponse> response = bids.stream()
+    									.map(bid -> new BidResponse (
+    											bid.getId(),
+    											bid.getAmount(),
+    											bid.getBidder().getUsername(),
+    											bid.getBidTime()
+    											))
+    									.collect(Collectors.toList());
+    	return ResponseEntity.ok(response);
     }
 
     // TEST
