@@ -37,6 +37,7 @@ public class AuctionController {
     }
 
     // CREATE AUCTION
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<Auction> createAuction(
             @Valid @RequestBody CreateAuctionRequest request,
@@ -57,6 +58,7 @@ public class AuctionController {
         );
     }
     // GET ONE
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
     public ResponseEntity<AuctionResponse> getAuction(@PathVariable Long id) {
 
@@ -67,6 +69,7 @@ public class AuctionController {
     }
 
     // BID
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{id}/bid")
     public ResponseEntity<String> placeBid(
             @PathVariable Long id,
