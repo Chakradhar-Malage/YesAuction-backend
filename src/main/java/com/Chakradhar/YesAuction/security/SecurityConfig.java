@@ -40,7 +40,10 @@ public class SecurityConfig {
 	            .requestMatchers("/api/auth/**", "/error").permitAll()
 	            .requestMatchers("/ws/**").permitAll()
 
-	            // Protected
+	            // Public read
+	            .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
+
+	            // Protected actions
 	            .requestMatchers("/api/auctions/**").hasRole("USER")
 
 	            // Everything else
@@ -62,6 +65,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of("http://localhost:3000"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowedMethods(List.of("*"));
+        
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();

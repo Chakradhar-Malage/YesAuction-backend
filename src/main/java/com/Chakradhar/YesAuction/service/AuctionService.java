@@ -4,6 +4,7 @@ import com.Chakradhar.YesAuction.config.RabbitMQConfig;
 import com.Chakradhar.YesAuction.dto.AuctionResponse;
 import com.Chakradhar.YesAuction.dto.AuctionUpdateDto;
 import com.Chakradhar.YesAuction.dto.BidMessageDto;
+import com.Chakradhar.YesAuction.dto.BidResponse;
 import com.Chakradhar.YesAuction.dto.BidUpdateDto;
 import com.Chakradhar.YesAuction.dto.CreateAuctionRequest;
 import com.Chakradhar.YesAuction.dto.PlaceBidRequest;
@@ -34,12 +35,14 @@ public class AuctionService {
     private final BidRepository bidRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RabbitTemplate rabbitTemplate;
+//    private final BidResponse bidResponse;
 
     public AuctionService(AuctionRepository auctionRepository, 
     					ItemRepository itemRepository, 
     					BidRepository bidRepository, 
     					SimpMessagingTemplate messagingTemplate,
-    					RabbitTemplate rabbitTemplate) {
+    					RabbitTemplate rabbitTemplate
+    					) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.bidRepository = bidRepository;
@@ -170,5 +173,9 @@ public class AuctionService {
             .orElseThrow(() -> new RuntimeException("Auction not found"));
 
         return mapToDto(auction);
+    }
+    
+    public List<Bid> getBidHistory(Long auctionId) {
+    	return bidRepository.findByAuctionIdOrderByAmountDesc(auctionId);
     }
 }
