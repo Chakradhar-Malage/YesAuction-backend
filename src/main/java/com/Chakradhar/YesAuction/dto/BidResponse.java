@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class BidResponse {
-//	@Id
+	@Id
 	private Long id;
 	private BigDecimal amount;
 	private String bidderUsername;
