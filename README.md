@@ -89,3 +89,15 @@ To create an admin user:
 (haven't built an api for this yet)
 Register normally
 In database: INSERT INTO user_roles (user_id, roles) VALUES (<your_user_id>, 'ROLE_ADMIN');
+
+### Future tasks
+
+Email notifications for outbid & auction win
+Auction creation form in frontend
+User profile page with bid/auction history
+Search & filter auctions
+Rate limiting & better error handling
+
+## Author
+Chakradhar
+GitHub: Chakradhar-Malage
