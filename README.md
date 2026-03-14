@@ -99,5 +99,4 @@ Search & filter auctions
 Rate limiting & better error handling
 
 ## Author
-Chakradhar
-GitHub: Chakradhar-Malage
+Chakradhar Malage
