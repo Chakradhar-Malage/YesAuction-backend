@@ -2,6 +2,9 @@ package com.Chakradhar.YesAuction.repository;
 
 import com.Chakradhar.YesAuction.entity.Auction;
 import com.Chakradhar.YesAuction.entity.AuctionStatus;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -13,4 +16,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
 
     @Query("SELECT a FROM Auction a WHERE a.seller.id = :sellerId")
     List<Auction> findBySellerId(Long sellerId);
+    
+    @Query("SELECT a FROM Auction a WHERE a.seller.id = :sellerId ORDER BY a.endTime DESC")
+    Page<Auction> findBySellerId(Long sellerId, Pageable pageable);
 }

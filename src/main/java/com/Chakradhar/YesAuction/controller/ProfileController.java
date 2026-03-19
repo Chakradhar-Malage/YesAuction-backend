@@ -8,12 +8,20 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Chakradhar.YesAuction.dto.MyAuctionsResponse;
+import com.Chakradhar.YesAuction.dto.MyBidsResponse;
 import com.Chakradhar.YesAuction.dto.MyProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.service.ProfileService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/users")
@@ -48,5 +56,32 @@ public class ProfileController {
 		return ResponseEntity.ok(profileService.getAllUSersForAdmin());
 	}
 	
+	//auctions created by currentusre
+	@GetMapping("/me/auctions")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<Page<MyAuctionsResponse>> getMyAuctions(
+			@AuthenticationPrincipal User currentUser,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "7") int size
+			){
+		
+		Pageable pageable = PageRequest.of(page, size, Sort.by("endTime").descending());
+		Page<MyAuctionsResponse> result = profileService.getMyAuctions(currentUser, pageable);
+		return ResponseEntity.ok(result);
+				
+	}
+	
+	//total bids placed by currentuser on all auctions
+	@GetMapping("/me/bids")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<Page<MyBidsResponse>> getMyBids(
+	        @AuthenticationPrincipal User currentUser,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "7") int size) {
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("bidTime").descending());
+	    Page<MyBidsResponse> result = profileService.getMyBids(currentUser, pageable);
+	    return ResponseEntity.ok(result);
+	}
 	
 }
