@@ -13,5 +13,4 @@ public class YesAuctionBackendApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(YesAuctionBackendApplication.class, args);
 	}
-
 }
