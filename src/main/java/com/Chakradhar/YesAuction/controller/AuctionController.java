@@ -57,6 +57,16 @@ public class AuctionController {
             auctionService.getActiveAuctionsDto()
         );
     }
+    
+    //get all auctions irrespective of status or anything else
+    @GetMapping("/all")
+    public ResponseEntity<List<AuctionResponse>> getAllAuctions() {
+
+        return ResponseEntity.ok(
+            auctionService.getAllAuctionsDto()
+        );
+    }
+    
     // GET ONE
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
@@ -67,7 +77,8 @@ public class AuctionController {
 
         return ResponseEntity.ok(dto);
     }
-
+    
+    
     // BID
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/{id}/bid")
