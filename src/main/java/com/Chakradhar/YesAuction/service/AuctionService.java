@@ -104,9 +104,9 @@ public class AuctionService {
         return dto;
     }
     
-    public List<AuctionResponse> getActiveAuctionsDto() {
+    public List<AuctionResponse> getAllAuctionsDto() {
 
-        return auctionRepository.findByStatus(AuctionStatus.ACTIVE)
+        return auctionRepository.findAll()
                 .stream()
                 .map(this::mapToDto)
                 .toList();
@@ -177,5 +177,14 @@ public class AuctionService {
     
     public List<Bid> getBidHistory(Long auctionId) {
     	return bidRepository.findByAuctionIdOrderByAmountDesc(auctionId);
+    }
+    
+    public List<AuctionResponse> getActiveAuctionsDto() {
+        LocalDateTime now = LocalDateTime.now();
+
+        return auctionRepository.findAll().stream()
+            .filter(a -> a.getEndTime().isAfter(now))
+            .map(this::mapToDto)
+            .toList();
     }
 }
