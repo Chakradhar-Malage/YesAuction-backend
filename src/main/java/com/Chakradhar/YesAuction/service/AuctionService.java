@@ -187,4 +187,21 @@ public class AuctionService {
             .map(this::mapToDto)
             .toList();
     }
+    
+    public void validateBid(Long auctionId, BigDecimal amount) {
+        Auction auction = getAuctionById(auctionId);
+
+        if (auction.getStatus() != AuctionStatus.ACTIVE) {
+            throw new RuntimeException("Auction is not active");
+        }
+
+        if (LocalDateTime.now().isAfter(auction.getEndTime())) {
+            throw new RuntimeException("Auction has ended");
+        }
+
+        BigDecimal minBid = auction.getCurrentPrice().add(BigDecimal.valueOf(1));
+        if (amount.compareTo(minBid) < 0) {
+            throw new RuntimeException("Bid too low");
+        }
+    }
 }
