@@ -8,6 +8,7 @@ import com.Chakradhar.YesAuction.dto.BidResponse;
 import com.Chakradhar.YesAuction.dto.BidUpdateDto;
 import com.Chakradhar.YesAuction.dto.CreateAuctionRequest;
 import com.Chakradhar.YesAuction.dto.PlaceBidRequest;
+import com.Chakradhar.YesAuction.dto.UpdateAuctionRequest;
 import com.Chakradhar.YesAuction.entity.*;
 import com.Chakradhar.YesAuction.repository.AuctionRepository;
 import com.Chakradhar.YesAuction.repository.BidRepository;
@@ -203,5 +204,31 @@ public class AuctionService {
         if (amount.compareTo(minBid) < 0) {
             throw new RuntimeException("Bid too low");
         }
+    }
+    
+    @Transactional
+    public Auction updateAuction(Long auctionId, UpdateAuctionRequest request, User currentUser) {
+        Auction auction = getAuctionById(auctionId);
+
+        // Authorization: Only seller or ADMIN can update
+        if (!auction.getSeller().getId().equals(currentUser.getId()) && 
+            !currentUser.getRoles().contains("ROLE_ADMIN")) {
+            throw new RuntimeException("You are not authorized to edit this auction");
+        }
+
+        // Business rule: Cannot edit if bids have been placed
+        if (!auction.getBids().isEmpty()) {
+            throw new RuntimeException("Cannot edit auction after bids have been placed");
+        }
+
+        // Update fields
+        auction.getItem().setTitle(request.getTitle());
+        auction.getItem().setDescription(request.getDescription());
+        auction.getItem().setImageUrl(request.getImageUrl());
+        auction.setEndTime(request.getEndTime());
+
+        // Save both (due to relationship)
+        itemRepository.save(auction.getItem());
+        return auctionRepository.save(auction);
     }
 }
