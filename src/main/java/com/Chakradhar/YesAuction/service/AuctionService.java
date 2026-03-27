@@ -1,6 +1,7 @@
 package com.Chakradhar.YesAuction.service;
 
 import com.Chakradhar.YesAuction.config.RabbitMQConfig;
+import com.Chakradhar.YesAuction.dto.AuctionEndResponse;
 import com.Chakradhar.YesAuction.dto.AuctionResponse;
 import com.Chakradhar.YesAuction.dto.AuctionUpdateDto;
 import com.Chakradhar.YesAuction.dto.BidMessageDto;
@@ -230,5 +231,41 @@ public class AuctionService {
         // Save both (due to relationship)
         itemRepository.save(auction.getItem());
         return auctionRepository.save(auction);
+    }
+    
+    @Transactional
+    public AuctionEndResponse endAuction(Long auctionId, User currentUser) {
+        Auction auction = getAuctionById(auctionId);
+
+        // Authorization: Only seller or ADMIN
+        boolean isSeller = auction.getSeller().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRoles().contains("ROLE_ADMIN");
+
+        if (!isSeller && !isAdmin) {
+            throw new RuntimeException("You are not authorized to end this auction");
+        }
+
+        if (auction.getStatus() != AuctionStatus.ACTIVE) {
+            throw new RuntimeException("Auction is already ended or cancelled");
+        }
+
+        auction.setStatus(AuctionStatus.ENDED);
+        auctionRepository.save(auction);
+
+        // Determine winner (highest bid)
+        Bid winnerBid = bidRepository.findTopByAuctionIdOrderByAmountDesc(auctionId)
+                .orElse(null);
+
+        String winnerUsername = winnerBid != null ? winnerBid.getBidder().getUsername() : null;
+        BigDecimal finalPrice = winnerBid != null ? winnerBid.getAmount() : auction.getStartingPrice();
+
+        return new AuctionEndResponse(
+                auction.getId(),
+                auction.getItem().getTitle(),
+                finalPrice,
+                winnerUsername,
+                LocalDateTime.now(),
+                winnerUsername != null ? "Auction ended with winner" : "Auction ended with no bids"
+        );
     }
 }

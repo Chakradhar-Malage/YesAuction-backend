@@ -88,7 +88,10 @@ public class AuctionController {
             @AuthenticationPrincipal UserDetails userDetails) {
 
         User bidder = userService.findByUsername(userDetails.getUsername());
+     // Validate synchronously
+        auctionService.validateBid(id, request.getAmount());
 
+        //Only valid bids go to queue
         auctionService.queueBid(id, request.getAmount(), bidder.getId());
 
         return ResponseEntity.ok("Bid received and being processed...");
@@ -109,6 +112,27 @@ public class AuctionController {
     	return ResponseEntity.ok(response);
     }
 
+    
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Auction> updateAuction(
+    			@PathVariable Long id,
+    			@Valid @RequestBody UpdateAuctionRequest request,
+    			@AuthenticationPrincipal User currentUser) {
+    	Auction updateAuction = auctionService.updateAuction(id, request, currentUser);
+    	return ResponseEntity.ok(updateAuction);
+    }
+    
+    @PostMapping("/{id}/end")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AuctionEndResponse> endAuction(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser) {
+
+        AuctionEndResponse response = auctionService.endAuction(id, currentUser);
+        return ResponseEntity.ok(response);
+    }
+    
     // TEST
     @GetMapping("/test-broadcast/{auctionId}")
     public void testBroadcast(@PathVariable Long auctionId) {
