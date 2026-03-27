@@ -123,6 +123,7 @@ public class AuctionController {
     	return ResponseEntity.ok(updateAuction);
     }
     
+    
     @PostMapping("/{id}/end")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuctionEndResponse> endAuction(
@@ -131,6 +132,23 @@ public class AuctionController {
 
         AuctionEndResponse response = auctionService.endAuction(id, currentUser);
         return ResponseEntity.ok(response);
+    }
+    
+    
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> cancelAuction(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser) {
+
+        String message = auctionService.cancelAuction(id, currentUser);
+        return ResponseEntity.ok(message);
+    }
+    
+    
+    @GetMapping("/{id}/winner")
+    public ResponseEntity<AuctionEndResponse> getWinner(@PathVariable Long id) {
+        return ResponseEntity.ok(auctionService.getWinner(id));
     }
     
     // TEST
