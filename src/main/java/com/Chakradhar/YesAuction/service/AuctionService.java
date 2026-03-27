@@ -268,4 +268,50 @@ public class AuctionService {
                 winnerUsername != null ? "Auction ended with winner" : "Auction ended with no bids"
         );
     }
+    
+    public AuctionEndResponse getWinner(Long auctionId) {
+        Auction auction = getAuctionById(auctionId);
+
+        if (auction.getStatus() != AuctionStatus.ENDED) {
+            throw new RuntimeException("Auction is still active");
+        }
+
+        Bid winnerBid = bidRepository.findTopByAuctionIdOrderByAmountDesc(auctionId)
+                .orElse(null);
+
+        return new AuctionEndResponse(
+                auction.getId(),
+                auction.getItem().getTitle(),
+                winnerBid != null ? winnerBid.getAmount() : auction.getStartingPrice(),
+                winnerBid != null ? winnerBid.getBidder().getUsername() : null,
+                auction.getEndTime(),
+                winnerBid != null ? "Winner declared" : "No winner - no bids placed"
+        );
+    }
+    
+    
+    @Transactional
+    public String cancelAuction(Long auctionId, User currentUser) {
+        Auction auction = getAuctionById(auctionId);
+
+        boolean isSeller = auction.getSeller().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRoles().contains("ROLE_ADMIN");
+
+        if (!isSeller && !isAdmin) {
+            throw new RuntimeException("You are not authorized to cancel this auction");
+        }
+
+        if (auction.getStatus() != AuctionStatus.ACTIVE) {
+            throw new RuntimeException("Only active auctions can be cancelled");
+        }
+
+        if (!auction.getBids().isEmpty()) {
+            throw new RuntimeException("Cannot cancel auction after bids have been placed");
+        }
+
+        auction.setStatus(AuctionStatus.CANCELLED);
+        auctionRepository.save(auction);
+
+        return "Auction cancelled successfully";
+    }
 }
