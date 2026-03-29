@@ -249,10 +249,13 @@ public class AuctionService {
             throw new RuntimeException("Auction is already ended or cancelled");
         }
 
+        // === Bug FIX ===
+        auction.setEndTime(LocalDateTime.now());   // ← Update endTime to now
         auction.setStatus(AuctionStatus.ENDED);
+        
         auctionRepository.save(auction);
 
-        // Determine winner (highest bid)
+        // Determine winner
         Bid winnerBid = bidRepository.findTopByAuctionIdOrderByAmountDesc(auctionId)
                 .orElse(null);
 
