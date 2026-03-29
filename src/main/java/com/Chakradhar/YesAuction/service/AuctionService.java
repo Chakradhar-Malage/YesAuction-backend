@@ -3,6 +3,7 @@ package com.Chakradhar.YesAuction.service;
 import com.Chakradhar.YesAuction.config.RabbitMQConfig;
 import com.Chakradhar.YesAuction.dto.AuctionEndResponse;
 import com.Chakradhar.YesAuction.dto.AuctionResponse;
+import com.Chakradhar.YesAuction.dto.AuctionSearchResponse;
 import com.Chakradhar.YesAuction.dto.AuctionUpdateDto;
 import com.Chakradhar.YesAuction.dto.BidMessageDto;
 import com.Chakradhar.YesAuction.dto.BidResponse;
@@ -16,6 +17,8 @@ import com.Chakradhar.YesAuction.repository.BidRepository;
 import com.Chakradhar.YesAuction.repository.ItemRepository;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.CacheEvict;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -316,5 +319,29 @@ public class AuctionService {
         auctionRepository.save(auction);
 
         return "Auction cancelled successfully";
+    }
+    
+    
+    public Page<AuctionSearchResponse> searchAuctions(String keyword, Pageable pageable){
+    	if(keyword == null || keyword.trim().isEmpty()) {
+    		return auctionRepository.findByStatus(AuctionStatus.ACTIVE, pageable)
+    				.map(this::convertToSearchResponse);
+    	}
+    	
+    	Page<Auction> auctions = auctionRepository.searchActiveAuctionsByTitle(keyword.trim(), pageable);
+    	return auctions.map(this::convertToSearchResponse);
+    }
+    
+    private AuctionSearchResponse convertToSearchResponse(Auction auction) {
+    	return new AuctionSearchResponse(
+                auction.getId(),
+                auction.getItem().getTitle(),
+                auction.getItem().getDescription(),
+                auction.getItem().getImageUrl(),
+                auction.getCurrentPrice(),
+                auction.getEndTime(),
+                auction.getSeller().getUsername(),
+                auction.getStatus().name()
+        );
     }
 }
