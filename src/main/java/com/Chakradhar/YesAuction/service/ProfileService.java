@@ -4,12 +4,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.Chakradhar.YesAuction.dto.ChangePasswordRequest;
 import com.Chakradhar.YesAuction.dto.MyAuctionsResponse;
 import com.Chakradhar.YesAuction.dto.MyBidsResponse;
 import com.Chakradhar.YesAuction.dto.MyProfileResponse;
+import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
+import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
 import com.Chakradhar.YesAuction.entity.Auction;
 import com.Chakradhar.YesAuction.entity.Bid;
@@ -26,15 +31,18 @@ public class ProfileService {
 	private final UserRepository userRepository;
 	private final AuctionRepository auctionRepository;
 	private final BidRepository bidRepository;
+	private final PasswordEncoder passwordEncoder;
 	
 	public ProfileService(UserRepository userRepository, 
 							GlobalExceptionHandler globalExceptionHandler,
 							AuctionRepository auctionRepository,
-							BidRepository bidsRepository) {
+							BidRepository bidsRepository,
+							PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
 		this.globalExceptionHandler = globalExceptionHandler;
 		this.auctionRepository = auctionRepository;
 		this.bidRepository = bidsRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 	
 	public MyProfileResponse getMyProfile(User currentUser) {
@@ -97,5 +105,50 @@ public class ProfileService {
 	            b.getBidTime(),
 	            b.getAuction().getCurrentPrice()
 	    ));
+	}
+	
+	@Transactional
+	public UpdateProfileResponse updateProfile(User currentUser, UpdateProfileRequest request) {
+
+	    // Check if email is already taken by another user
+	    if (!currentUser.getEmail().equalsIgnoreCase(request.getEmail())) {
+	        if (userRepository.existsByEmail(request.getEmail())) {
+	            throw new RuntimeException("Email is already in use by another user");
+	        }
+	    }
+
+	    // Check if username is already taken by another user
+	    if (!currentUser.getUsername().equals(request.getUsername())) {
+	        if (userRepository.existsByUsername(request.getUsername())) {
+	            throw new RuntimeException("Username is already taken");
+	        }
+	    }
+
+	    currentUser.setUsername(request.getUsername());
+	    currentUser.setEmail(request.getEmail());
+
+	    userRepository.save(currentUser);
+
+	    return new UpdateProfileResponse(
+	            currentUser.getUsername(),
+	            currentUser.getEmail(),
+	            "Profile updated successfully"
+	    );
+	}
+	
+	
+	@Transactional
+	public String changePassword(User currentUser, ChangePasswordRequest request) {
+
+	    // Verify current password
+	    if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+	        throw new RuntimeException("Current password is incorrect");
+	    }
+
+	    // Update with new password (hashed)
+	    currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+	    userRepository.save(currentUser);
+
+	    return "Password changed successfully";
 	}
 }
