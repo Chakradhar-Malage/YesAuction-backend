@@ -7,16 +7,23 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Chakradhar.YesAuction.dto.ChangePasswordRequest;
 import com.Chakradhar.YesAuction.dto.MyAuctionsResponse;
 import com.Chakradhar.YesAuction.dto.MyBidsResponse;
 import com.Chakradhar.YesAuction.dto.MyProfileResponse;
+import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
+import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.service.ProfileService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -82,6 +89,27 @@ public class ProfileController {
 	    Pageable pageable = PageRequest.of(page, size, Sort.by("bidTime").descending());
 	    Page<MyBidsResponse> result = profileService.getMyBids(currentUser, pageable);
 	    return ResponseEntity.ok(result);
+	}
+	
+	
+	@PutMapping("/me")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<UpdateProfileResponse> updateProfile(
+	        @AuthenticationPrincipal User currentUser,
+	        @Valid @RequestBody UpdateProfileRequest request) {
+
+	    UpdateProfileResponse response = profileService.updateProfile(currentUser, request);
+	    return ResponseEntity.ok(response);
+	}
+	
+	@PutMapping("/me/password")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<String> changePassword(
+	        @AuthenticationPrincipal User currentUser,
+	        @Valid @RequestBody ChangePasswordRequest request) {
+
+	    String message = profileService.changePassword(currentUser, request);
+	    return ResponseEntity.ok(message);
 	}
 	
 }

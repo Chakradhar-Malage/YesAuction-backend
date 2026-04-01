@@ -8,6 +8,11 @@ import com.Chakradhar.YesAuction.service.AuctionService;
 import com.Chakradhar.YesAuction.service.UserService;
 
 import jakarta.validation.Valid;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -151,6 +156,17 @@ public class AuctionController {
         return ResponseEntity.ok(auctionService.getWinner(id));
     }
     
+    
+    @GetMapping("/search")
+    public ResponseEntity<Page<AuctionSearchResponse>> searchAuctions(
+    			@RequestParam(required = false) String keyword,
+    			@RequestParam(defaultValue = "0") int page,
+    			@RequestParam(defaultValue = "10") int size){
+    	
+    	Pageable pageable = PageRequest.of(	page, size, Sort.by("endTime").descending());
+    	Page<AuctionSearchResponse> result = auctionService.searchAuctions(keyword, pageable);
+    	return ResponseEntity.ok(result);
+    }
     // TEST
     @GetMapping("/test-broadcast/{auctionId}")
     public void testBroadcast(@PathVariable Long auctionId) {
