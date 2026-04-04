@@ -1,5 +1,6 @@
 package com.Chakradhar.YesAuction.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,14 +85,24 @@ public class ProfileService {
 	public Page<MyAuctionsResponse> getMyAuctions(User currentUser, Pageable pageable){
 		Page<Auction> auctions = auctionRepository.findBySellerId(currentUser.getId(), pageable);
 		
-		return auctions.map(a -> new MyAuctionsResponse(
-					a.getId(),
-					a.getItem().getTitle(),
-					a.getItem().getDescription(),
-		            a.getCurrentPrice(),
-		            a.getEndTime(),
-		            a.getStatus().name()
-				));
+		return auctions.map(a -> {
+		    String status;
+
+		    if (a.getEndTime().isBefore(LocalDateTime.now())) {
+		        status = "ENDED";
+		    } else {
+		        status = "ACTIVE";
+		    }
+
+		    return new MyAuctionsResponse(
+		        a.getId(),
+		        a.getItem().getTitle(),
+		        a.getItem().getDescription(),
+		        a.getCurrentPrice(),
+		        a.getEndTime(),
+		        status
+		    );
+		});
 	}
 	
 	public Page<MyBidsResponse> getMyBids(User currentUser, Pageable pageable) {
