@@ -2,6 +2,7 @@ package com.Chakradhar.YesAuction.controller;
 
 import com.Chakradhar.YesAuction.dto.*;
 import com.Chakradhar.YesAuction.entity.Auction;
+import com.Chakradhar.YesAuction.entity.AuctionCategory;
 import com.Chakradhar.YesAuction.entity.Bid;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.service.AuctionService;
@@ -167,6 +168,20 @@ public class AuctionController {
     	Page<AuctionSearchResponse> result = auctionService.searchAuctions(keyword, pageable);
     	return ResponseEntity.ok(result);
     }
+    
+    //getting auction based on category
+    // THIS ONE IS NOT FORCED AUTHENTICATED YET
+    @GetMapping(params="category")
+    public ResponseEntity<Page<AuctionSearchResponse>> getAuctions(
+            @RequestParam(required = false) AuctionCategory category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("endTime").descending());
+        Page<AuctionSearchResponse> result = auctionService.getAuctionsByCategory(category, pageable);
+        return ResponseEntity.ok(result);
+    }
+    
     // TEST
     @GetMapping("/test-broadcast/{auctionId}")
     public void testBroadcast(@PathVariable Long auctionId) {
