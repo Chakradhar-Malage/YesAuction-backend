@@ -26,4 +26,8 @@ public class Item {
 
     @OneToOne(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
     private Auction auction;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private AuctionCategory category = AuctionCategory.OTHER;
 }

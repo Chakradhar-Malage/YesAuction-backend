@@ -1,6 +1,7 @@
 package com.Chakradhar.YesAuction.repository;
 
 import com.Chakradhar.YesAuction.entity.Auction;
+import com.Chakradhar.YesAuction.entity.AuctionCategory;
 import com.Chakradhar.YesAuction.entity.AuctionStatus;
 
 import org.springframework.data.domain.Pageable;
@@ -29,4 +30,10 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
            "ORDER BY a.endTime DESC")
     Page<Auction> searchActiveAuctionsByTitle(@Param("keyword") String keyword, Pageable pageable);
     
+    //active auctions by category
+    @Query("SELECT a FROM Auction a " +
+    	       "WHERE a.status = 'ACTIVE' " +
+    	       "AND (:category IS NULL OR a.item.category = :category) " +
+    	       "ORDER BY a.endTime DESC")
+    	Page<Auction> findActiveByCategory(@Param("category") AuctionCategory category, Pageable pageable);
 }

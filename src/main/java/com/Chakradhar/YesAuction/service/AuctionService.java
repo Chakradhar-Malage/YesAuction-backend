@@ -344,4 +344,10 @@ public class AuctionService {
                 auction.getStatus().name()
         );
     }
+    
+    //getting active auctions by category
+    public Page<AuctionSearchResponse> getAuctionsByCategory(AuctionCategory category, Pageable pageable) {
+        Page<Auction> auctions = auctionRepository.findActiveByCategory(category, pageable);
+        return auctions.map(this::convertToSearchResponse);
+    }
 }
