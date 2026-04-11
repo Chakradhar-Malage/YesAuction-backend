@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,9 +45,9 @@ public class AuctionController {
 
     // CREATE AUCTION
     @PreAuthorize("isAuthenticated()")
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Auction> createAuction(
-            @Valid @RequestBody CreateAuctionRequest request,
+            @ModelAttribute @Valid @RequestBody CreateAuctionRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         User seller = userService.findByUsername(userDetails.getUsername());
@@ -64,7 +65,7 @@ public class AuctionController {
         );
     }
     
-    //get all auctions irrespective of status or anything else
+    //get all auction irrespective of status or anything else
     @GetMapping("/all")
     public ResponseEntity<List<AuctionResponse>> getAllAuctions() {
 
@@ -119,11 +120,11 @@ public class AuctionController {
     }
 
     
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Auction> updateAuction(
     			@PathVariable Long id,
-    			@Valid @RequestBody UpdateAuctionRequest request,
+    			@ModelAttribute @Valid @RequestBody UpdateAuctionRequest request,
     			@AuthenticationPrincipal User currentUser) {
     	Auction updateAuction = auctionService.updateAuction(id, request, currentUser);
     	return ResponseEntity.ok(updateAuction);

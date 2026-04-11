@@ -17,8 +17,8 @@ public class UpdateAuctionRequest {
 
     private String description;
 
-//    private String imageUrl;
-    private MultipartFile image;
+    private String imageUrl;
+//    private MultipartFile image;
 
     @Future(message = "End time must be in the future")
     private LocalDateTime endTime;

@@ -6,7 +6,7 @@ import com.Chakradhar.YesAuction.dto.AuctionResponse;
 import com.Chakradhar.YesAuction.dto.AuctionSearchResponse;
 import com.Chakradhar.YesAuction.dto.AuctionUpdateDto;
 import com.Chakradhar.YesAuction.dto.BidMessageDto;
-import com.Chakradhar.YesAuction.dto.BidResponse;
+//import com.Chakradhar.YesAuction.dto.BidResponse;
 import com.Chakradhar.YesAuction.dto.BidUpdateDto;
 import com.Chakradhar.YesAuction.dto.CreateAuctionRequest;
 import com.Chakradhar.YesAuction.dto.PlaceBidRequest;
@@ -40,27 +40,36 @@ public class AuctionService {
     private final BidRepository bidRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RabbitTemplate rabbitTemplate;
+    private final ImageStorageService imageStorageService;
 //    private final BidResponse bidResponse;
 
     public AuctionService(AuctionRepository auctionRepository, 
     					ItemRepository itemRepository, 
     					BidRepository bidRepository, 
     					SimpMessagingTemplate messagingTemplate,
-    					RabbitTemplate rabbitTemplate
+    					RabbitTemplate rabbitTemplate,
+    					ImageStorageService imageStorageService
     					) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.bidRepository = bidRepository;
         this.messagingTemplate = messagingTemplate;
         this.rabbitTemplate = rabbitTemplate;
+        this.imageStorageService = imageStorageService;
     }
 
     @Transactional
     public Auction createAuction(CreateAuctionRequest request, User seller) {
+    	String imageFilename = null;
+    	
+    	if(request.getImage() != null && !request.getImage().isEmpty()) {
+    		imageFilename = imageStorageService.saveImage(request.getImage());
+    	}
+    	
         Item item = Item.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(imageFilename)
                 .build();
         itemRepository.save(item);
 
@@ -213,7 +222,10 @@ public class AuctionService {
     @Transactional
     public Auction updateAuction(Long auctionId, UpdateAuctionRequest request, User currentUser) {
         Auction auction = getAuctionById(auctionId);
-
+//        String imageFilename = null;
+//        if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
+//            imageFilename = imageStorageService.saveImage(request.getImageUrl());
+//        }
         // Authorization: Only seller or ADMIN can update
         if (!auction.getSeller().getId().equals(currentUser.getId()) && 
             !currentUser.getRoles().contains("ROLE_ADMIN")) {
