@@ -47,7 +47,7 @@ public class AuctionController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Auction> createAuction(
-            @ModelAttribute @Valid @RequestBody CreateAuctionRequest request,
+            @ModelAttribute @Valid CreateAuctionRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         User seller = userService.findByUsername(userDetails.getUsername());
