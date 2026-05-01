@@ -99,6 +99,7 @@ public class ProfileService {
 		        a.getItem().getTitle(),
 		        a.getItem().getDescription(),
 		        a.getCurrentPrice(),
+		        a.getItem().getImageUrl(),
 		        a.getEndTime(),
 		        status
 		    );
