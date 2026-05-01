@@ -14,8 +14,8 @@ public class MyAuctionsResponse {
 	private Long id;
 	private String title;
 	private String description;
-	private String imageUrl;
 	private BigDecimal currentPrice;
+	private String imageUrl;
 	private LocalDateTime endTime;
 	private String status;
 }
