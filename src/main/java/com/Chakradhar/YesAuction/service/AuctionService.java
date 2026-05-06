@@ -310,10 +310,14 @@ public class AuctionService {
     
     @Transactional
     public String cancelAuction(Long auctionId, User currentUser) {
+
         Auction auction = getAuctionById(auctionId);
 
-        boolean isSeller = auction.getSeller().getId().equals(currentUser.getId());
-        boolean isAdmin = currentUser.getRoles().contains("ROLE_ADMIN");
+        boolean isSeller = auction.getSeller().getUsername()
+                .equals(currentUser.getUsername());
+
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         if (!isSeller && !isAdmin) {
             throw new RuntimeException("You are not authorized to cancel this auction");

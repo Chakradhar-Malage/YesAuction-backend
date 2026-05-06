@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -143,8 +144,7 @@ public class AuctionController {
     
     
     @DeleteMapping("/{id}")
-//    @PreAuthorize("hasRole('ADMIN') or @auctionSecurityService.isOwner(#id, authentication.name)")
-    @PreAuthorize("hasRole('ADMIN')")   // ← Simple Admin-only check for testing
+    @PreAuthorize("hasRole('ADMIN') or @auctionSecurityService.isOwner(#id, authentication.name)")
     public ResponseEntity<String> cancelAuction(
             @PathVariable Long id,
             @AuthenticationPrincipal User currentUser) {
@@ -192,4 +192,5 @@ public class AuctionController {
                         "test-broadcaster",
                         LocalDateTime.now()));
     }
+
 }
