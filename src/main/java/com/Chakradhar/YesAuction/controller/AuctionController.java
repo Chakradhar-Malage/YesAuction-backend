@@ -143,7 +143,8 @@ public class AuctionController {
     
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("hasRole('ADMIN') or @auctionSecurityService.isOwner(#id, authentication.name)")
+    @PreAuthorize("hasRole('ADMIN')")   // ← Simple Admin-only check for testing
     public ResponseEntity<String> cancelAuction(
             @PathVariable Long id,
             @AuthenticationPrincipal User currentUser) {
@@ -151,7 +152,6 @@ public class AuctionController {
         String message = auctionService.cancelAuction(id, currentUser);
         return ResponseEntity.ok(message);
     }
-    
     
     @GetMapping("/{id}/winner")
     public ResponseEntity<AuctionEndResponse> getWinner(@PathVariable Long id) {
