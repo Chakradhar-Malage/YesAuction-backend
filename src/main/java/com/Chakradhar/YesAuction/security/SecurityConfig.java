@@ -45,7 +45,7 @@ public class SecurityConfig {
 	            .requestMatchers(HttpMethod.GET, "/uploads/*").permitAll()
 
 	            // Protected actions
-	            .requestMatchers("/api/auctions/**").hasRole("USER")
+	            .requestMatchers("/api/auctions/**").authenticated()
 
 	            // Everything else
 	            .anyRequest().authenticated()
