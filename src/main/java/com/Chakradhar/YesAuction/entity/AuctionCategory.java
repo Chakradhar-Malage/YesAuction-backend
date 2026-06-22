@@ -5,6 +5,7 @@ public enum AuctionCategory {
     JEWELRY,
     REAL_ESTATE,
     ART,
+    GAMING,        
     ELECTRONICS,
     COLLECTIBLES,
     VEHICLES,
