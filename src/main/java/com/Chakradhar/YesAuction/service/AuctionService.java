@@ -25,6 +25,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -220,31 +221,52 @@ public class AuctionService {
     }
     
     @Transactional
-    public Auction updateAuction(Long auctionId, UpdateAuctionRequest request, User currentUser) {
+    public Auction updateAuction(
+            Long auctionId,
+            UpdateAuctionRequest request,
+            User currentUser) {
+
         Auction auction = getAuctionById(auctionId);
-//        String imageFilename = null;
-//        if (request.getImageUrl() != null && !request.getImageUrl().isEmpty()) {
-//            imageFilename = imageStorageService.saveImage(request.getImageUrl());
-//        }
-        // Authorization: Only seller or ADMIN can update
-        if (!auction.getSeller().getId().equals(currentUser.getId()) && 
-            !currentUser.getRoles().contains("ROLE_ADMIN")) {
+
+        if (!auction.getSeller().getId().equals(currentUser.getId())
+                && !currentUser.getRoles().contains("ROLE_ADMIN")) {
             throw new RuntimeException("You are not authorized to edit this auction");
         }
 
-        // Business rule: Cannot edit if bids have been placed
         if (!auction.getBids().isEmpty()) {
             throw new RuntimeException("Cannot edit auction after bids have been placed");
         }
 
-        // Update fields
         auction.getItem().setTitle(request.getTitle());
         auction.getItem().setDescription(request.getDescription());
-        auction.getItem().setImageUrl(request.getImageUrl());
         auction.setEndTime(request.getEndTime());
 
-        // Save both (due to relationship)
         itemRepository.save(auction.getItem());
+
+        return auctionRepository.save(auction);
+    }
+    
+    
+    //service to update the auction image
+    @Transactional
+    public Auction updateAuctionImage(
+            Long auctionId,
+            MultipartFile image,
+            User currentUser) {
+
+        Auction auction = getAuctionById(auctionId);
+
+        if (!auction.getSeller().getId().equals(currentUser.getId())
+                && !currentUser.getRoles().contains("ROLE_ADMIN")) {
+            throw new RuntimeException("You are not authorized");
+        }
+
+        String imageUrl = imageStorageService.saveImage(image);
+
+        auction.getItem().setImageUrl(imageUrl);
+
+        itemRepository.save(auction.getItem());
+
         return auctionRepository.save(auction);
     }
     

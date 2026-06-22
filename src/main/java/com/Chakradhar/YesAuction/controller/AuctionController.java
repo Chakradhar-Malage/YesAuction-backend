@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -121,14 +122,32 @@ public class AuctionController {
     }
 
     
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Auction> updateAuction(
-    			@PathVariable Long id,
-    			@ModelAttribute @Valid @RequestBody UpdateAuctionRequest request,
-    			@AuthenticationPrincipal User currentUser) {
-    	Auction updateAuction = auctionService.updateAuction(id, request, currentUser);
-    	return ResponseEntity.ok(updateAuction);
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateAuctionRequest request,
+            @AuthenticationPrincipal User currentUser) {
+
+        Auction updatedAuction =
+                auctionService.updateAuction(id, request, currentUser);
+
+        return ResponseEntity.ok(updatedAuction);
+    }
+    
+    
+    //endpoint to edit the auction image
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Auction> updateAuctionImage(
+            @PathVariable Long id,
+            @RequestParam("image") MultipartFile image,
+            @AuthenticationPrincipal User currentUser) {
+
+        Auction updatedAuction =
+                auctionService.updateAuctionImage(id, image, currentUser);
+
+        return ResponseEntity.ok(updatedAuction);
     }
     
     
