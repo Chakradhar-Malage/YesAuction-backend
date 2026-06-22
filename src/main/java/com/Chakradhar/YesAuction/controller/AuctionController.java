@@ -137,17 +137,18 @@ public class AuctionController {
     
     
     //endpoint to edit the auction image
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Auction> updateAuctionImage(
+    @PostMapping("/{id}/image")
+    public ResponseEntity<AuctionResponse> updateAuctionImage(
             @PathVariable Long id,
             @RequestParam("image") MultipartFile image,
             @AuthenticationPrincipal User currentUser) {
 
-        Auction updatedAuction =
+        Auction auction =
                 auctionService.updateAuctionImage(id, image, currentUser);
 
-        return ResponseEntity.ok(updatedAuction);
+        return ResponseEntity.ok(
+                auctionService.getAuctionByIdDto(auction.getId())
+        );
     }
     
     
