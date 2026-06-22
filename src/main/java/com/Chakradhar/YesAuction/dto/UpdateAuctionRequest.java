@@ -1,13 +1,11 @@
 package com.Chakradhar.YesAuction.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class UpdateAuctionRequest {
@@ -17,9 +15,7 @@ public class UpdateAuctionRequest {
 
     private String description;
 
-    private String imageUrl;
-//    private MultipartFile image;
-
     @Future(message = "End time must be in the future")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endTime;
 }
