@@ -138,6 +138,7 @@ public class AuctionController {
     
     //endpoint to edit the auction image
     @PostMapping("/{id}/image")
+    @PreAuthorize("isAuthenticated()") 
     public ResponseEntity<AuctionResponse> updateAuctionImage(
             @PathVariable Long id,
             @RequestParam("image") MultipartFile image,
