@@ -5,6 +5,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import com.Chakradhar.YesAuction.entity.*;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -26,6 +27,13 @@ public class JwtUtil {
     
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+    
+    public Long extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        // We'll add userId to claims when generating token
+        Integer userId = claims.get("userId", Integer.class);
+        return userId != null ? userId.longValue() : null;
     }
 
     public Date extractExpiration(String token) {
@@ -57,6 +65,18 @@ public class JwtUtil {
         		.map(auth -> auth.getAuthority())
         		.toList()
         		);
+        return createToken(claims, userDetails.getUsername());
+    }
+    
+ // Update generateToken method to include userId
+    public String generateToken(UserDetails userDetails, Long userId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", userDetails.getAuthorities()
+                .stream()
+                .map(auth -> auth.getAuthority())
+                .toList());
+        claims.put("userId", userId);   // ← Important
+        
         return createToken(claims, userDetails.getUsername());
     }
 

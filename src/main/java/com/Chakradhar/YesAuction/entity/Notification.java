@@ -37,7 +37,3 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 }
-
-enum NotificationType {
-    BID_PLACED, OUTBID, AUCTION_WON, AUCTION_ENDED, SYSTEM
-}
