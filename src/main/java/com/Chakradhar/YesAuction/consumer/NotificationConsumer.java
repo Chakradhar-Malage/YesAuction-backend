@@ -1,52 +1,46 @@
 package com.Chakradhar.YesAuction.consumer;
 
-import com.Chakradhar.YesAuction.config.RabbitMQConfig;
 import com.Chakradhar.YesAuction.dto.OutbidNotificationDto;
+import com.Chakradhar.YesAuction.entity.Notification;
+import com.Chakradhar.YesAuction.entity.NotificationType;
 import com.Chakradhar.YesAuction.entity.User;
+import com.Chakradhar.YesAuction.repository.NotificationRepository;
 import com.Chakradhar.YesAuction.repository.UserRepository;
-import com.Chakradhar.YesAuction.service.EmailService;
-
-import jakarta.mail.MessagingException;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class NotificationConsumer {
-	private final EmailService emailService;
-    public NotificationConsumer(
-    		SimpMessagingTemplate messagingTemplate, 
-    		UserRepository userRepository,
-    		EmailService emailService) {
-		super();
-		this.emailService = emailService;
-		this.messagingTemplate = messagingTemplate;
-		this.userRepository = userRepository;
-	}
 
-	private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    // constructor injection
+    @RabbitListener(queues = "notificationQueue")
+    public void handleNotification(OutbidNotificationDto dto) {
+        User user = userRepository.findById(dto.getAuctionId()) // Temporary - change later to actual userId
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    @RabbitListener(queues = RabbitMQConfig.NOTIFICATION_QUEUE)
-    public void sendOutbidNotification(OutbidNotificationDto notification) throws MessagingException {
-        // Find the outbid user's email
-        User outbidUser = userRepository.findByUsername(notification.getOutbidUsername())
-                .orElse(null);
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setTitle("Outbid Alert");
+        notification.setMessage(
+            String.format("%s has been outbid with $%s on auction ID: %d", 
+                dto.getNewBidderUsername(), dto.getNewAmount(), dto.getAuctionId())
+        );
+        notification.setType(NotificationType.OUTBID);
+        notification.setLink("/auctions/" + dto.getAuctionId());
 
-        if (outbidUser != null && outbidUser.getEmail() != null) {
-            emailService.sendOutbidEmail(notification, outbidUser.getEmail());
+        Notification saved = notificationRepository.save(notification);
 
-            // Also send private WebSocket notification (optional)
-            messagingTemplate.convertAndSendToUser(
-                    notification.getOutbidUsername(),
-                    "/queue/notifications",
-                    notification
-            );
-        } else {
-            System.out.println("No email found for user: " + notification.getOutbidUsername());
-        }
+        // Real-time WebSocket push
+        messagingTemplate.convertAndSendToUser(
+            user.getUsername(),
+            "/queue/notifications",
+            saved
+        );
     }
 }
