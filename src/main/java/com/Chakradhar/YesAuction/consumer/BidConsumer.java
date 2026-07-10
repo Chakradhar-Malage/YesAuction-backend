@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Component
 public class BidConsumer {
@@ -81,9 +82,17 @@ public class BidConsumer {
                 return;
             }
 
+            // FIX: capture the current top bid BEFORE saving the new one.
+            // Previously this was queried after the new bid was persisted,
+            // so it always returned the just-placed bid itself instead of
+            // the bid it was replacing — meaning the real previous highest
+            // bidder (the person who should be notified) was never found.
+            Optional<Bid> previousHighest =
+                    bidRepository.findTopByAuctionIdOrderByAmountDesc(auction.getId());
+
             // Create bid
             Bid bid = Bid.builder()
-            		.messageId(message.getMessageId())
+                    .messageId(message.getMessageId())
                     .auction(auction)
                     .bidder(bidder)
                     .amount(message.getAmount())
@@ -92,42 +101,41 @@ public class BidConsumer {
 
             // Save bid
             bidRepository.save(bid);
-            
+
             auction.addBid(bid);
             auctionRepository.save(auction);
-            
+
             log.info("Bid saved: {}", bid.getId());
             log.info("New bid placed by {} on auction {}", bidder.getUsername(), auction.getId());
+
             // Push to WebSocket (frontend live update)
             messagingTemplate.convertAndSend(
                     "/topic/auction/" + auction.getId(),
                     new BidUpdateDto(
                         bid.getAmount(),              // latest bid amount
                         bidder.getUsername(),        // bidder username
-                        bid.getBidTime()             // timestamp               		
+                        bid.getBidTime()             // timestamp
             ));
 
-            // Get previous highest bidder
-            var previousHighest =
-            	    bidRepository.findTopByAuctionIdOrderByAmountDesc(auction.getId());
-
+            // FIX: use .equals() instead of != for boxed Long comparisons.
+            // != compares object references; for Long values outside -128..127
+            // (i.e. almost every real id) two equal Longs are NOT the same
+            // reference, so != was silently returning the wrong answer.
             if (previousHighest.isPresent()
-                    && previousHighest.get().getId() != bid.getId()) {
+                    && !previousHighest.get().getId().equals(bid.getId())) {
 
                 User previousBidder = previousHighest.get().getBidder();
 
-                if (previousBidder.getId() != bidder.getId()) {
+                if (!previousBidder.getId().equals(bidder.getId())) {
 
-                    // Create notification
-                	// Replace the notification creation block with this:
-                	OutbidNotificationDto notification = new OutbidNotificationDto(
-                	    auction.getId(),
-                	    auction.getItem().getTitle(),           // Title
-                	    previousBidder.getUsername(),           // outbidUsername
-                	    bid.getAmount(),                        // newAmount
-                	    bidder.getUsername(),                   // newBidderUsername
-                	    bid.getBidTime()                        // timestamp
-                	);
+                    OutbidNotificationDto notification = new OutbidNotificationDto(
+                        auction.getId(),
+                        auction.getItem().getTitle(),           // Title
+                        previousBidder.getUsername(),           // outbidUsername
+                        bid.getAmount(),                        // newAmount
+                        bidder.getUsername(),                   // newBidderUsername
+                        bid.getBidTime()                        // timestamp
+                    );
 
                     // Send to RabbitMQ
                     rabbitTemplate.convertAndSend(
@@ -136,10 +144,8 @@ public class BidConsumer {
                             notification
                     );
 
-                    log.info("Outbid notification sent to {}",
+                    log.info("✅ Outbid notification SENT to RabbitMQ for user: {}",
                             previousBidder.getUsername());
-                    log.info("✅ Outbid notification SENT to RabbitMQ for user: {}", previousBidder.getUsername());
-
                 }
             }
 
