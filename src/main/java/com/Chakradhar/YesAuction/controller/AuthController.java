@@ -3,6 +3,7 @@ package com.Chakradhar.YesAuction.controller;
 import com.Chakradhar.YesAuction.dto.AuthResponse;
 import com.Chakradhar.YesAuction.dto.LoginRequest;
 import com.Chakradhar.YesAuction.dto.RegisterRequest;
+import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.security.JwtUtil;
 import com.Chakradhar.YesAuction.service.UserService;
 import jakarta.validation.Valid;
@@ -44,8 +45,12 @@ public class AuthController {
         );
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new AuthResponse(token, userDetails.getUsername()));
+        User user = userService.findByUsername(userDetails.getUsername());
+
+        // This is the important line
+        String token = jwtUtil.generateToken(userDetails, user.getId());
+
+        return ResponseEntity.ok(new AuthResponse(token, user.getUsername()));
     }
     
 }

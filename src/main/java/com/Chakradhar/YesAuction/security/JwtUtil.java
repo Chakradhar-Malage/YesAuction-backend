@@ -30,10 +30,18 @@ public class JwtUtil {
     }
     
     public Long extractUserId(String token) {
-        Claims claims = extractAllClaims(token);
-        // We'll add userId to claims when generating token
-        Integer userId = claims.get("userId", Integer.class);
-        return userId != null ? userId.longValue() : null;
+        try {
+            Claims claims = extractAllClaims(token);
+            // Try different possible claim names
+            Integer userId = claims.get("userId", Integer.class);
+            if (userId == null) {
+                userId = claims.get("id", Integer.class); // fallback
+            }
+            return userId != null ? userId.longValue() : null;
+        } catch (Exception e) {
+            System.out.println("Failed to extract userId: " + e.getMessage());
+            return null;
+        }
     }
 
     public Date extractExpiration(String token) {
@@ -57,28 +65,17 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, Long userId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles",
         		userDetails.getAuthorities()
         		.stream()
         		.map(auth -> auth.getAuthority())
-        		.toList()
-        		);
+        		.toList());
+        claims.put("userId", userId);
         return createToken(claims, userDetails.getUsername());
     }
     
- // Update generateToken method to include userId
-    public String generateToken(UserDetails userDetails, Long userId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", userDetails.getAuthorities()
-                .stream()
-                .map(auth -> auth.getAuthority())
-                .toList());
-        claims.put("userId", userId);   // ← Important
-        
-        return createToken(claims, userDetails.getUsername());
-    }
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()

@@ -92,12 +92,12 @@ public class BidConsumer {
 
             // Save bid
             bidRepository.save(bid);
-
+            
             auction.addBid(bid);
             auctionRepository.save(auction);
-
-            log.info("Bid saved: {}", bid.getId());
             
+            log.info("Bid saved: {}", bid.getId());
+            log.info("New bid placed by {} on auction {}", bidder.getUsername(), auction.getId());
             // Push to WebSocket (frontend live update)
             messagingTemplate.convertAndSend(
                     "/topic/auction/" + auction.getId(),
@@ -119,15 +119,15 @@ public class BidConsumer {
                 if (previousBidder.getId() != bidder.getId()) {
 
                     // Create notification
-                    OutbidNotificationDto notification =
-                            new OutbidNotificationDto(
-                                    auction.getId(),
-                                    auction.getItem().getTitle(),
-                                    previousBidder.getUsername(),
-                                    bid.getAmount(),
-                                    bidder.getUsername(),
-                                    bid.getBidTime()
-                            );
+                	// Replace the notification creation block with this:
+                	OutbidNotificationDto notification = new OutbidNotificationDto(
+                	    auction.getId(),
+                	    auction.getItem().getTitle(),           // Title
+                	    previousBidder.getUsername(),           // outbidUsername
+                	    bid.getAmount(),                        // newAmount
+                	    bidder.getUsername(),                   // newBidderUsername
+                	    bid.getBidTime()                        // timestamp
+                	);
 
                     // Send to RabbitMQ
                     rabbitTemplate.convertAndSend(
@@ -138,6 +138,7 @@ public class BidConsumer {
 
                     log.info("Outbid notification sent to {}",
                             previousBidder.getUsername());
+                    log.info("✅ Outbid notification SENT to RabbitMQ for user: {}", previousBidder.getUsername());
 
                 }
             }

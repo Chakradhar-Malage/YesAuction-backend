@@ -133,47 +133,59 @@ public class AuctionService {
         auctionRepository.save(auction);
     }
 
+//    @Transactional
+//    public Bid placeBid(Long auctionId, PlaceBidRequest request, User bidder) {
+//        Auction auction = getAuctionById(auctionId);
+//
+//        if (auction.getStatus() != AuctionStatus.ACTIVE) {
+//            throw new RuntimeException("Auction is not active");
+//        }
+//        if (LocalDateTime.now().isAfter(auction.getEndTime())) {
+//            auction.setStatus(AuctionStatus.ENDED);
+//            auctionRepository.save(auction);
+//            throw new RuntimeException("Auction has ended");
+//        }
+//        
+//        updateAuction(auction);
+//
+//        BigDecimal minBid = auction.getCurrentPrice().add(BigDecimal.valueOf(1));  // simple increment rule
+//        if (request.getAmount().compareTo(minBid) < 0) {
+//            throw new RuntimeException("Bid must be higher than current price + increment");
+//        }
+//
+//        Bid bid = Bid.builder()
+//                .auction(auction)
+//                .bidder(bidder)
+//                .amount(request.getAmount())
+//                .bidTime(LocalDateTime.now())
+//                .build();
+//
+//        auction.addBid(bid);
+//        bidRepository.save(bid);
+//        auctionRepository.save(auction);  // save updated currentPrice
+//
+//	    messagingTemplate.convertAndSend(
+//	    	    "/topic/auction/" + auction.getId(),
+//	    	    new AuctionUpdateDto(
+//	    	        auction.getId(),
+//	    	        auction.getCurrentPrice(),
+//	    	        new BidUpdateDto(bid.getAmount(), bid.getBidder().getUsername(), bid.getBidTime())
+//	    	    )
+//	    	);
+//    // Helper to convert entity to DTO
+//	    return bid;
+//    }
+    
+    
     @Transactional
     public Bid placeBid(Long auctionId, PlaceBidRequest request, User bidder) {
-        Auction auction = getAuctionById(auctionId);
-
-        if (auction.getStatus() != AuctionStatus.ACTIVE) {
-            throw new RuntimeException("Auction is not active");
-        }
-        if (LocalDateTime.now().isAfter(auction.getEndTime())) {
-            auction.setStatus(AuctionStatus.ENDED);
-            auctionRepository.save(auction);
-            throw new RuntimeException("Auction has ended");
-        }
+        // Instead of direct processing, queue it
+        queueBid(auctionId, request.getAmount(), bidder.getId());
         
-        updateAuction(auction);
-
-        BigDecimal minBid = auction.getCurrentPrice().add(BigDecimal.valueOf(1));  // simple increment rule
-        if (request.getAmount().compareTo(minBid) < 0) {
-            throw new RuntimeException("Bid must be higher than current price + increment");
-        }
-
-        Bid bid = Bid.builder()
-                .auction(auction)
-                .bidder(bidder)
-                .amount(request.getAmount())
-                .bidTime(LocalDateTime.now())
-                .build();
-
-        auction.addBid(bid);
-        bidRepository.save(bid);
-        auctionRepository.save(auction);  // save updated currentPrice
-
-	    messagingTemplate.convertAndSend(
-	    	    "/topic/auction/" + auction.getId(),
-	    	    new AuctionUpdateDto(
-	    	        auction.getId(),
-	    	        auction.getCurrentPrice(),
-	    	        new BidUpdateDto(bid.getAmount(), bid.getBidder().getUsername(), bid.getBidTime())
-	    	    )
-	    	);
-    // Helper to convert entity to DTO
-	    return bid;
+        // Return a temporary bid object or fetch latest
+        Auction auction = getAuctionById(auctionId);
+        return bidRepository.findTopByAuctionIdOrderByAmountDesc(auctionId)
+                .orElseThrow();
     }
     
     @Transactional
