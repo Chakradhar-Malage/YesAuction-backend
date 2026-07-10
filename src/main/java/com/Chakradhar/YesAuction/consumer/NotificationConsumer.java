@@ -21,26 +21,34 @@ public class NotificationConsumer {
 
     @RabbitListener(queues = "notificationQueue")
     public void handleNotification(OutbidNotificationDto dto) {
-        User user = userRepository.findById(dto.getAuctionId()) // Temporary - change later to actual userId
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // FIX: was userRepository.findById(dto.getAuctionId()) — looked up a
+        // User by an auction's ID. Must look up the outbid user by username.
+        User user = userRepository.findByUsername(dto.getOutbidUsername())
+                .orElseThrow(() -> new RuntimeException(
+                        "User not found: " + dto.getOutbidUsername()));
 
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle("Outbid Alert");
         notification.setMessage(
-            String.format("%s has been outbid with $%s on auction ID: %d", 
-                dto.getNewBidderUsername(), dto.getNewAmount(), dto.getAuctionId())
+                String.format("%s outbid you with $%s on \"%s\"",
+                        dto.getNewBidderUsername(),
+                        dto.getNewAmount(),
+                        dto.getAuctionTitle())
         );
         notification.setType(NotificationType.OUTBID);
-        notification.setLink("/auctions/" + dto.getAuctionId());
+        // FIX: was "/auctions/" + id (plural) — route is "/auction/:id" (singular).
+        // Every notification link was a dead 404 before this fix.
+        notification.setLink("/auction/" + dto.getAuctionId());
 
         Notification saved = notificationRepository.save(notification);
 
-        // Real-time WebSocket push
+        // Real-time WebSocket push — now actually reachable, since
+        // StompAuthInterceptor attaches a Principal on CONNECT.
         messagingTemplate.convertAndSendToUser(
-            user.getUsername(),
-            "/queue/notifications",
-            saved
+                user.getUsername(),
+                "/queue/notifications",
+                saved
         );
     }
 }

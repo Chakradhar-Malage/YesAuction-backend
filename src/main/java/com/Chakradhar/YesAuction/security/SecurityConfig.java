@@ -20,42 +20,35 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-	@Bean
-	public SecurityFilterChain securityFilterChain(
-	        HttpSecurity http,
-	        JwtAuthenticationFilter jwtAuthenticationFilter
-	) throws Exception {
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-	    http
-	        .cors(cors -> {})
-	        .csrf(csrf -> csrf.disable())
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
 
-	        .sessionManagement(session ->
-	            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/auth/**", "/error").permitAll()
+                .requestMatchers("/ws-notifications/**", "/ws/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                
+                .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/api/auctions/**").authenticated()
+                .anyRequest().authenticated()
+            )
+            
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-	        .authorizeHttpRequests(auth -> auth
-
-	            // Public
-	            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-	            .requestMatchers("/api/auth/**", "/error").permitAll()
-	            .requestMatchers("/ws/**").permitAll()
-
-	            // Public read
-	            .requestMatchers(HttpMethod.GET, "/api/auctions/**").permitAll()
-	            .requestMatchers(HttpMethod.GET, "/uploads/*").permitAll()
-
-	            // Protected actions
-	            .requestMatchers("/api/auctions/**").authenticated()
-
-	            // Everything else
-	            .anyRequest().authenticated()
-	        )
-
-	        .addFilterBefore(jwtAuthenticationFilter,
-	                UsernamePasswordAuthenticationFilter.class);
-
-	    return http.build();
-	}
+        return http.build();
+    }
 	
     //CORS CONFIGURATION
     @Bean
