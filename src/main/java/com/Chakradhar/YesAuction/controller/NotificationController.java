@@ -109,7 +109,6 @@ public class NotificationController {
 
         notificationRepository.save(notification); // inject NotificationRepository
 
-        System.out.println("✅ Manual test notification created for userId: " + userId);
         return ResponseEntity.ok("Test notification created successfully!");
     }
 }
