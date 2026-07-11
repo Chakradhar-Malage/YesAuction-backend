@@ -6,9 +6,12 @@ import com.Chakradhar.YesAuction.dto.BidUpdateDto;
 import com.Chakradhar.YesAuction.dto.OutbidNotificationDto;
 import com.Chakradhar.YesAuction.entity.AuctionStatus;
 import com.Chakradhar.YesAuction.entity.Bid;
+import com.Chakradhar.YesAuction.entity.Notification;
+import com.Chakradhar.YesAuction.entity.NotificationType;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.repository.AuctionRepository;
 import com.Chakradhar.YesAuction.repository.BidRepository;
+import com.Chakradhar.YesAuction.repository.NotificationRepository;
 import com.Chakradhar.YesAuction.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -33,6 +36,7 @@ public class BidConsumer {
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
     private final RabbitTemplate rabbitTemplate;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -40,12 +44,14 @@ public class BidConsumer {
             AuctionRepository auctionRepository,
             BidRepository bidRepository,
             UserRepository userRepository,
+            NotificationRepository notificationRepository,
             RabbitTemplate rabbitTemplate,
             SimpMessagingTemplate messagingTemplate) {
 
         this.auctionRepository = auctionRepository;
         this.bidRepository = bidRepository;
         this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
         this.rabbitTemplate = rabbitTemplate;
         this.messagingTemplate = messagingTemplate;
     }
@@ -82,11 +88,8 @@ public class BidConsumer {
                 return;
             }
 
-            // FIX: capture the current top bid BEFORE saving the new one.
-            // Previously this was queried after the new bid was persisted,
-            // so it always returned the just-placed bid itself instead of
-            // the bid it was replacing — meaning the real previous highest
-            // bidder (the person who should be notified) was never found.
+            // Capture the current top bid BEFORE saving the new one, so we know
+            // who the *actual* previous highest bidder was (see outbid section below).
             Optional<Bid> previousHighest =
                     bidRepository.findTopByAuctionIdOrderByAmountDesc(auction.getId());
 
@@ -117,10 +120,29 @@ public class BidConsumer {
                         bid.getBidTime()             // timestamp
             ));
 
-            // FIX: use .equals() instead of != for boxed Long comparisons.
-            // != compares object references; for Long values outside -128..127
-            // (i.e. almost every real id) two equal Longs are NOT the same
-            // reference, so != was silently returning the wrong answer.
+            // --- BID_PLACED confirmation for the bidder themselves ---
+            // Sent directly here (no RabbitMQ hop needed -- we're already
+            // inside a successfully-processed bid) rather than round-tripping
+            // through the notification exchange like the outbid flow does.
+            Notification confirmation = new Notification();
+            confirmation.setUser(bidder);
+            confirmation.setTitle("Bid Placed");
+            confirmation.setMessage(
+                    String.format("Your bid of $%s on \"%s\" was placed successfully.",
+                            bid.getAmount(), auction.getItem().getTitle())
+            );
+            confirmation.setType(NotificationType.BID_PLACED);
+            confirmation.setLink("/auction/" + auction.getId());
+
+            Notification savedConfirmation = notificationRepository.save(confirmation);
+
+            messagingTemplate.convertAndSendToUser(
+                    bidder.getUsername(),
+                    "/queue/notifications",
+                    savedConfirmation
+            );
+
+            // --- Outbid notification for the previous highest bidder ---
             if (previousHighest.isPresent()
                     && !previousHighest.get().getId().equals(bid.getId())) {
 
@@ -137,14 +159,13 @@ public class BidConsumer {
                         bid.getBidTime()                        // timestamp
                     );
 
-                    // Send to RabbitMQ
                     rabbitTemplate.convertAndSend(
                             RabbitMQConfig.NOTIFICATION_EXCHANGE,
                             RabbitMQConfig.NOTIFICATION_ROUTING_KEY,
                             notification
                     );
 
-                    log.info("✅ Outbid notification SENT to RabbitMQ for user: {}",
+                    log.info("Outbid notification SENT to RabbitMQ for user: {}",
                             previousBidder.getUsername());
                 }
             }
