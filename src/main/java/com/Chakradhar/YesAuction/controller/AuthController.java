@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         var user = userService.register(request);
-        String token = jwtUtil.generateToken(user);
+        String token = jwtUtil.generateToken(user, user.getId());
         return ResponseEntity.ok(new AuthResponse(token, user.getUsername()));
     }
 
