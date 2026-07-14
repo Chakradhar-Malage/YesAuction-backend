@@ -195,7 +195,7 @@ public class AuctionController {
     // THIS ONE IS NOT FORCED AUTHENTICATED YET
     @GetMapping(params="category")
     public ResponseEntity<Page<AuctionSearchResponse>> getAuctions(
-            @RequestParam(required = false) AuctionCategory category,
+            @RequestParam(required = false) List <AuctionCategory> category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
