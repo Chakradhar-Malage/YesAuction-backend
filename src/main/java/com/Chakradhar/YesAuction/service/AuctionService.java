@@ -132,49 +132,6 @@ public class AuctionService {
     public void updateAuction(Auction auction) {
         auctionRepository.save(auction);
     }
-
-//    @Transactional
-//    public Bid placeBid(Long auctionId, PlaceBidRequest request, User bidder) {
-//        Auction auction = getAuctionById(auctionId);
-//
-//        if (auction.getStatus() != AuctionStatus.ACTIVE) {
-//            throw new RuntimeException("Auction is not active");
-//        }
-//        if (LocalDateTime.now().isAfter(auction.getEndTime())) {
-//            auction.setStatus(AuctionStatus.ENDED);
-//            auctionRepository.save(auction);
-//            throw new RuntimeException("Auction has ended");
-//        }
-//        
-//        updateAuction(auction);
-//
-//        BigDecimal minBid = auction.getCurrentPrice().add(BigDecimal.valueOf(1));  // simple increment rule
-//        if (request.getAmount().compareTo(minBid) < 0) {
-//            throw new RuntimeException("Bid must be higher than current price + increment");
-//        }
-//
-//        Bid bid = Bid.builder()
-//                .auction(auction)
-//                .bidder(bidder)
-//                .amount(request.getAmount())
-//                .bidTime(LocalDateTime.now())
-//                .build();
-//
-//        auction.addBid(bid);
-//        bidRepository.save(bid);
-//        auctionRepository.save(auction);  // save updated currentPrice
-//
-//	    messagingTemplate.convertAndSend(
-//	    	    "/topic/auction/" + auction.getId(),
-//	    	    new AuctionUpdateDto(
-//	    	        auction.getId(),
-//	    	        auction.getCurrentPrice(),
-//	    	        new BidUpdateDto(bid.getAmount(), bid.getBidder().getUsername(), bid.getBidTime())
-//	    	    )
-//	    	);
-//    // Helper to convert entity to DTO
-//	    return bid;
-//    }
     
     
     @Transactional
@@ -396,8 +353,9 @@ public class AuctionService {
     }
     
     //getting active auctions by category
-    public Page<AuctionSearchResponse> getAuctionsByCategory(AuctionCategory category, Pageable pageable) {
-        Page<Auction> auctions = auctionRepository.findActiveByCategory(category, pageable);
+    public Page<AuctionSearchResponse> getAuctionsByCategory(List<AuctionCategory> categories, Pageable pageable) {
+        List<AuctionCategory> filter = (categories == null || categories.isEmpty()) ? null : categories;
+        Page<Auction> auctions = auctionRepository.findActiveByCategoryIn(filter, pageable);
         return auctions.map(this::convertToSearchResponse);
     }
 }
