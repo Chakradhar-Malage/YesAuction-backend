@@ -33,7 +33,7 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     //active auctions by category
     @Query("SELECT a FROM Auction a " +
     	       "WHERE a.status = 'ACTIVE' " +
-    	       "AND (:category IS NULL OR a.item.category = :category) " +
+    	       "AND (:category IS NULL OR a.item.category IN :category) " +
     	       "ORDER BY a.endTime DESC")
-    	Page<Auction> findActiveByCategory(@Param("category") AuctionCategory category, Pageable pageable);
+    	Page<Auction> findActiveByCategoryIn(@Param("category") List <AuctionCategory> category, Pageable pageable);
 }
