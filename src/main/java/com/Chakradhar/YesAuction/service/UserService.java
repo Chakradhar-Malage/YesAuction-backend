@@ -4,12 +4,14 @@ import com.Chakradhar.YesAuction.dto.RegisterRequest;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.security.core.userdetails.*;
 //import org.springframework.security.crypto.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService implements UserDetailsService{
@@ -52,4 +54,5 @@ public class UserService implements UserDetailsService{
                 .orElseThrow(() ->
                         new RuntimeException("User not found: " + username));
     }
+    
 }
