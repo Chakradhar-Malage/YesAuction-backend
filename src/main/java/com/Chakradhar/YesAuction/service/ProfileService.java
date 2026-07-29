@@ -28,19 +28,16 @@ import com.Chakradhar.YesAuction.repository.UserRepository;
 @Service
 public class ProfileService {
 
-	private final GlobalExceptionHandler globalExceptionHandler;
 	private final UserRepository userRepository;
 	private final AuctionRepository auctionRepository;
 	private final BidRepository bidRepository;
 	private final PasswordEncoder passwordEncoder;
 	
 	public ProfileService(UserRepository userRepository, 
-							GlobalExceptionHandler globalExceptionHandler,
 							AuctionRepository auctionRepository,
 							BidRepository bidsRepository,
 							PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
-		this.globalExceptionHandler = globalExceptionHandler;
 		this.auctionRepository = auctionRepository;
 		this.bidRepository = bidsRepository;
 		this.passwordEncoder = passwordEncoder;
@@ -163,4 +160,33 @@ public class ProfileService {
 
 	    return "Password changed successfully";
 	}
+	
+    @Transactional
+    public void deleteAccount(User currentUser) {
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.isDeleted()) {
+            throw new RuntimeException("Account already deleted");
+        }
+
+        // 1. Anonymize personal data
+        user.setOriginalUsername(user.getUsername()); // optional backup
+        user.setUsername("deleted_user_" + user.getId());
+        user.setEmail("deleted_" + user.getId() + "@yesauction.deleted");
+        user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString())); // invalidate password
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+
+        // 2. Optional: Clear sensitive fields
+        // user.setPhone(null);
+        // user.setProfileImage(null);
+
+        userRepository.save(user);
+
+        // 3. Soft cleanup related data (optional but recommended)
+        // - Remove from all watchlists
+        // - Mark notifications as deleted or delete them
+        // - Do NOT touch bids or auctions
+    }
 }
