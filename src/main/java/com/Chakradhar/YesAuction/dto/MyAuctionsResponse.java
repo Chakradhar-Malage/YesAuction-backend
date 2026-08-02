@@ -2,7 +2,6 @@ package com.Chakradhar.YesAuction.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,4 +17,5 @@ public class MyAuctionsResponse {
 	private String imageUrl;
 	private LocalDateTime endTime;
 	private String status;
+	private boolean hasBids; // true if at least one bid was placed (distinguishes a real sale from an unsold ENDED auction)
 }
