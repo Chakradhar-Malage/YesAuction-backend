@@ -19,6 +19,7 @@ import com.Chakradhar.YesAuction.dto.ChangePasswordRequest;
 import com.Chakradhar.YesAuction.dto.MyAuctionsResponse;
 import com.Chakradhar.YesAuction.dto.MyBidsResponse;
 import com.Chakradhar.YesAuction.dto.MyProfileResponse;
+import com.Chakradhar.YesAuction.dto.SellerStatsResponse;
 import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
 import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
@@ -47,6 +48,13 @@ public class ProfileController {
 	public ResponseEntity<MyProfileResponse> getMyProfile(@AuthenticationPrincipal User currentUser){
 		MyProfileResponse profile = profileService.getMyProfile(currentUser);
 		return ResponseEntity.ok(profile);
+	}
+
+	// =========Seller dashboard stats========
+	@GetMapping("/me/stats")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<SellerStatsResponse> getMyStats(@AuthenticationPrincipal User currentUser){
+		return ResponseEntity.ok(profileService.getSellerStats(currentUser));
 	}
 	
 	// ========Public profile======

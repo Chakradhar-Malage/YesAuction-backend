@@ -1,22 +1,17 @@
 package com.Chakradhar.YesAuction.repository;
-
 import com.Chakradhar.YesAuction.entity.Auction;
 import com.Chakradhar.YesAuction.entity.AuctionCategory;
 import com.Chakradhar.YesAuction.entity.AuctionStatus;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import java.math.BigDecimal;
 import java.util.List;
-
 public interface AuctionRepository extends JpaRepository<Auction, Long> {
-
     List<Auction> findByStatus(AuctionStatus status);
     Page<Auction> findByStatus(AuctionStatus status, Pageable pageable);
-
     @Query("SELECT a FROM Auction a WHERE a.seller.id = :sellerId")
     List<Auction> findBySellerId(Long sellerId);
     
@@ -36,4 +31,21 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
     	       "AND (:category IS NULL OR a.item.category IN :category) " +
     	       "ORDER BY a.endTime DESC")
     	Page<Auction> findActiveByCategoryIn(@Param("category") List <AuctionCategory> category, Pageable pageable);
+
+    
+    //SELLER STATS
+
+    @Query("SELECT COUNT(a) FROM Auction a WHERE a.seller.id = :sellerId")
+    long countBySellerId(@Param("sellerId") Long sellerId);
+
+    // Only counts auctions that ended AND actually received at least one bid,
+    // so an ended-with-zero-bids auction (currentPrice == startingPrice) never
+    // inflates earnings.
+    @Query("""
+        SELECT COALESCE(SUM(a.currentPrice), 0) FROM Auction a
+        WHERE a.seller.id = :sellerId
+        AND a.status = com.Chakradhar.YesAuction.entity.AuctionStatus.ENDED
+        AND EXISTS (SELECT b FROM Bid b WHERE b.auction = a)
+        """)
+    BigDecimal sumEarningsBySellerId(@Param("sellerId") Long sellerId);
 }
