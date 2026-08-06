@@ -14,6 +14,7 @@ import com.Chakradhar.YesAuction.dto.ChangePasswordRequest;
 import com.Chakradhar.YesAuction.dto.MyAuctionsResponse;
 import com.Chakradhar.YesAuction.dto.MyBidsResponse;
 import com.Chakradhar.YesAuction.dto.MyProfileResponse;
+import com.Chakradhar.YesAuction.dto.SellerStatsResponse;
 import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
 import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
@@ -91,6 +92,8 @@ public class ProfileService {
 		        status = "ACTIVE";
 		    }
 
+		    boolean hasBids = bidRepository.existsByAuctionId(a.getId());
+
 		    return new MyAuctionsResponse(
 		        a.getId(),
 		        a.getItem().getTitle(),
@@ -98,9 +101,20 @@ public class ProfileService {
 		        a.getCurrentPrice(),
 		        a.getItem().getImageUrl(),
 		        a.getEndTime(),
-		        status
+		        status,
+		        hasBids
 		    );
 		});
+	}
+
+	// Dashboard summary stats — computed across ALL of the seller's auctions,
+	// not just the current page, since totals need the full picture.
+	public SellerStatsResponse getSellerStats(User currentUser) {
+		long totalAuctions = auctionRepository.countBySellerId(currentUser.getId());
+		long activeBids = bidRepository.countActiveBidsForSeller(currentUser.getId());
+		var totalEarnings = auctionRepository.sumEarningsBySellerId(currentUser.getId());
+
+		return new SellerStatsResponse(totalAuctions, activeBids, totalEarnings);
 	}
 	
 	public Page<MyBidsResponse> getMyBids(User currentUser, Pageable pageable) {
