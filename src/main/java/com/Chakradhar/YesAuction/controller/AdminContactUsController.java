@@ -35,4 +35,10 @@ public class AdminContactUsController {
 		contactService.markAsRead(id);
 		return ResponseEntity.ok("Marked as read");
 	}
+	
+	@GetMapping("/unread-count")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Long> getUnreadCount() {
+	    return ResponseEntity.ok(contactService.getUnreadCount());
+	}
 }
