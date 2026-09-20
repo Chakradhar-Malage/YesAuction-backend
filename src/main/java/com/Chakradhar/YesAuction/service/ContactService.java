@@ -39,4 +39,8 @@ public class ContactService {
     	message.setRead(true);
     	contactMessageRepository.save(message);
     }
+    
+    public long getUnreadCount() {
+        return contactMessageRepository.countByIsReadFalse();
+    }
 }
