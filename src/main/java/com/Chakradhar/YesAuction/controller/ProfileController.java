@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Chakradhar.YesAuction.dto.AdminUserResponse;
 import com.Chakradhar.YesAuction.dto.ChangePasswordRequest;
 import com.Chakradhar.YesAuction.dto.MyAuctionsResponse;
 import com.Chakradhar.YesAuction.dto.MyBidsResponse;
@@ -69,8 +70,8 @@ public class ProfileController {
 	// ========For Admin========
 	@GetMapping("/admin/all")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
-		return ResponseEntity.ok(profileService.getAllUSersForAdmin());
+	public ResponseEntity<List<AdminUserResponse>> getAllUsers() {
+		return ResponseEntity.ok(profileService.getAllUsersForAdmin());
 	}
 	
 	//auctions created by currentusre
@@ -130,4 +131,11 @@ public class ProfileController {
 		return ResponseEntity.ok("Account deleted successfully!");
 	}
 	
+	
+	@DeleteMapping("/admin/{userId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<String> softDeleteUser(@PathVariable Long userId) {
+	    profileService.softDeleteUserByAdmin(userId);
+	    return ResponseEntity.ok("User soft-deleted successfully");
+	}
 }

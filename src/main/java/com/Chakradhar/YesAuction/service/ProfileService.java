@@ -18,6 +18,7 @@ import com.Chakradhar.YesAuction.dto.SellerStatsResponse;
 import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
 import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
+import com.Chakradhar.YesAuction.dto.AdminUserResponse;
 import com.Chakradhar.YesAuction.entity.Auction;
 import com.Chakradhar.YesAuction.entity.Bid;
 import com.Chakradhar.YesAuction.entity.User;
@@ -69,15 +70,17 @@ public class ProfileService {
 				);				
 	}
 	
-	public List<UserProfileResponse> getAllUSersForAdmin(){
-		return userRepository.findAll().stream().map(user -> new UserProfileResponse (
-					user.getId(), 
-					user.getUsername(),
-					user.getRoles().get(0),
-					0, 
-					0
-				))
-				.collect(Collectors.toList());
+	public List<AdminUserResponse> getAllUsersForAdmin() {
+	    return userRepository.findAll().stream()
+	            .map(user -> new AdminUserResponse(
+	                    user.getId(),
+	                    user.getUsername(),
+	                    user.getEmail(),
+	                    user.getRoles(),
+	                    user.isDeleted(),
+	                    user.getDeletedAt() != null ? user.getDeletedAt().toString() : null
+	            ))
+	            .collect(Collectors.toList());
 	}
 	
 	public Page<MyAuctionsResponse> getMyAuctions(User currentUser, Pageable pageable){
@@ -192,15 +195,31 @@ public class ProfileService {
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
 
-        // 2. Optional: Clear sensitive fields
-        // user.setPhone(null);
-        // user.setProfileImage(null);
-
         userRepository.save(user);
 
-        // 3. Soft cleanup related data (optional but recommended)
-        // - Remove from all watchlists
-        // - Mark notifications as deleted or delete them
-        // - Do NOT touch bids or auctions
+       }
+    
+    @Transactional
+    public void softDeleteUserByAdmin(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.isDeleted()) {
+            throw new RuntimeException("User is already deleted");
+        }
+
+        // Prevent deleting other admins (optional but recommended)
+        if (user.getRoles().contains("ROLE_ADMIN")) {
+            throw new RuntimeException("Cannot delete an admin user");
+        }
+
+        user.setOriginalUsername(user.getUsername());
+        user.setUsername("deleted_user_" + user.getId());
+        user.setEmail("deleted_" + user.getId() + "@yesauction.deleted");
+        user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+
+        userRepository.save(user);
     }
 }
