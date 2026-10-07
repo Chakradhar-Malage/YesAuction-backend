@@ -20,6 +20,7 @@ import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
 import com.Chakradhar.YesAuction.dto.AdminUserResponse;
 import com.Chakradhar.YesAuction.entity.Auction;
+import com.Chakradhar.YesAuction.entity.AuctionStatus;
 import com.Chakradhar.YesAuction.entity.Bid;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.exception.*;
@@ -132,6 +133,22 @@ public class ProfileService {
 	            b.getAuction().getCurrentPrice()
 	    ));
 	}
+	
+	// getWonAuctionsCount
+	public long getWonAuctionsCount(User currentUser) {
+	    List<Bid> userBids = bidRepository.findByBidderId(currentUser.getId());
+
+	    return userBids.stream()
+	            .filter(bid -> bid.getAuction().getStatus() == AuctionStatus.ENDED)
+	            .filter(bid -> {
+	                Bid highest = bidRepository
+	                        .findTopByAuctionIdOrderByAmountDesc(bid.getAuction().getId())
+	                        .orElse(null);
+	                return highest != null && highest.getId().equals(bid.getId());
+	            })
+	            .count();
+	}
+	
 	
 	@Transactional
 	public UpdateProfileResponse updateProfile(User currentUser, UpdateProfileRequest request) {

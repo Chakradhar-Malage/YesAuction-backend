@@ -74,7 +74,7 @@ public class ProfileController {
 		return ResponseEntity.ok(profileService.getAllUsersForAdmin());
 	}
 	
-	//auctions created by currentusre
+	//auctions created by current user
 	@GetMapping("/me/auctions")
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<Page<MyAuctionsResponse>> getMyAuctions(
@@ -121,6 +121,12 @@ public class ProfileController {
 
 	    String message = profileService.changePassword(currentUser, request);
 	    return ResponseEntity.ok(message);
+	}
+	
+	@GetMapping("/me/won-count")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<Long> getWonAuctionsCount(@AuthenticationPrincipal User currentUser) {
+	    return ResponseEntity.ok(profileService.getWonAuctionsCount(currentUser));
 	}
 	
 	@DeleteMapping("/account")

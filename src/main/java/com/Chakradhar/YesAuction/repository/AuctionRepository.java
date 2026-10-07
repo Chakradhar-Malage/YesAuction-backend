@@ -48,4 +48,15 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
         AND EXISTS (SELECT b FROM Bid b WHERE b.auction = a)
         """)
     BigDecimal sumEarningsBySellerId(@Param("sellerId") Long sellerId);
+    
+    
+    @Query("""
+    	    SELECT COUNT(b) FROM Bid b 
+    	    WHERE b.bidder.id = :userId 
+    	    AND b.auction.status = 'ENDED'
+    	    AND b.amount = (
+    	        SELECT MAX(b2.amount) FROM Bid b2 WHERE b2.auction.id = b.auction.id
+    	    )
+    	""")
+    	long countWonAuctionsByUserId(@Param("userId") Long userId);
 }
