@@ -9,7 +9,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 @EnableCaching
 @EnableMethodSecurity(prePostEnabled = true)
 public class YesAuctionBackendApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(YesAuctionBackendApplication.class, args);
 	}
