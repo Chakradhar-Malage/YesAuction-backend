@@ -33,4 +33,20 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
         AND b.auction.status = com.Chakradhar.YesAuction.entity.AuctionStatus.ACTIVE
         """)
     long countActiveBidsForSeller(@Param("sellerId") Long sellerId);
+    
+    
+    List<Bid> findByBidderId(Long bidderId);
+
+    @Query(value = """
+        SELECT COUNT(*) FROM bids b
+        INNER JOIN auctions a ON a.id = b.auction_id
+        WHERE b.bidder_id = :userId
+        AND a.status = 'ENDED'
+        AND b.amount = (
+            SELECT MAX(b2.amount) FROM bids b2 WHERE b2.auction_id = b.auction_id
+        )
+        """, nativeQuery = true)
+    long countWonAuctions(@Param("userId") Long userId);
+    
 }
+
