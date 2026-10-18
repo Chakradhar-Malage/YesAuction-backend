@@ -46,7 +46,20 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
             SELECT MAX(b2.amount) FROM bids b2 WHERE b2.auction_id = b.auction_id
         )
         """, nativeQuery = true)
+    
     long countWonAuctions(@Param("userId") Long userId);
+    
+    @Query(value = """
+    	    SELECT b.* FROM bids b
+    	    INNER JOIN auctions a ON a.id = b.auction_id
+    	    WHERE b.bidder_id = :userId
+    	    AND a.status = 'ENDED'
+    	    AND b.amount = (
+    	        SELECT MAX(b2.amount) FROM bids b2 WHERE b2.auction_id = b.auction_id
+    	    )
+    	    ORDER BY a.end_time DESC
+    	    """, nativeQuery = true)
+    	List<Bid> findWonBidsByUserId(@Param("userId") Long userId);
     
 }
 
