@@ -24,6 +24,7 @@ import com.Chakradhar.YesAuction.dto.SellerStatsResponse;
 import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
 import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
+import com.Chakradhar.YesAuction.dto.WonAuctionResponse;
 import com.Chakradhar.YesAuction.entity.User;
 import com.Chakradhar.YesAuction.service.ProfileService;
 
@@ -123,10 +124,18 @@ public class ProfileController {
 	    return ResponseEntity.ok(message);
 	}
 	
+	
 	@GetMapping("/me/won-count")
 	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<Long> getWonAuctionsCount(@AuthenticationPrincipal User currentUser) {
 	    return ResponseEntity.ok(profileService.getWonAuctionsCount(currentUser));
+	}
+	
+	@GetMapping("/me/won-auctions")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<List<WonAuctionResponse>> getWonAuctions(
+	        @AuthenticationPrincipal User currentUser) {
+	    return ResponseEntity.ok(profileService.getWonAuctions(currentUser));
 	}
 	
 	@DeleteMapping("/account")

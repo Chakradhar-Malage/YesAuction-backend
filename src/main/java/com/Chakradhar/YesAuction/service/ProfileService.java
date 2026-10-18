@@ -18,6 +18,7 @@ import com.Chakradhar.YesAuction.dto.SellerStatsResponse;
 import com.Chakradhar.YesAuction.dto.UpdateProfileRequest;
 import com.Chakradhar.YesAuction.dto.UpdateProfileResponse;
 import com.Chakradhar.YesAuction.dto.UserProfileResponse;
+import com.Chakradhar.YesAuction.dto.WonAuctionResponse;
 import com.Chakradhar.YesAuction.dto.AdminUserResponse;
 import com.Chakradhar.YesAuction.entity.Auction;
 import com.Chakradhar.YesAuction.entity.AuctionStatus;
@@ -238,5 +239,24 @@ public class ProfileService {
         user.setDeletedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+    
+    
+    public List<WonAuctionResponse> getWonAuctions(User user) {
+        List<Bid> wonBids = bidRepository.findWonBidsByUserId(user.getId());
+
+        return wonBids.stream()
+                .map(bid -> {
+                    Auction auction = bid.getAuction();
+                    return new WonAuctionResponse(
+                            auction.getId(),
+                            auction.getItem().getTitle(),
+                            auction.getItem().getImageUrl(),
+                            bid.getAmount(),
+                            auction.getEndTime(),
+                            auction.getSeller().getUsername()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }
