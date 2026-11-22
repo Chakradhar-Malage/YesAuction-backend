@@ -53,6 +53,13 @@ public class User implements UserDetails{
 	private LocalDateTime deletedAt;
 	private String originalUsername; 
 	
+	private String mobileNumber;
+	private boolean mobileNumberVerified = false;
+	private boolean emailVerified = false;
+
+	private String otp;
+	private LocalDateTime otpExpiry;
+	
 	@Override
     public String getPassword() {
         return password;
